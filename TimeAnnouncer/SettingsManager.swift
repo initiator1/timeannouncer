@@ -15,6 +15,7 @@ class SettingsManager {
     enum VoiceProvider: String {
         case system = "system"
         case elevenlabs = "elevenlabs"
+        case kokoro = "kokoro"
     }
 
     enum TimingMode: String {
@@ -59,7 +60,7 @@ class SettingsManager {
         get {
             guard let rawValue = defaults.string(forKey: Keys.voiceProvider),
                   let provider = VoiceProvider(rawValue: rawValue) else {
-                return .system
+                return .kokoro
             }
             return provider
         }

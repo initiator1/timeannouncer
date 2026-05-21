@@ -12,6 +12,8 @@
 		E91234560003 /* SettingsManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = E91234550003 /* SettingsManager.swift */; };
 		E91234560004 /* KeychainHelper.swift in Sources */ = {isa = PBXBuildFile; fileRef = E91234550006 /* KeychainHelper.swift */; };
 		E91234560005 /* ElevenLabsClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = E91234550007 /* ElevenLabsClient.swift */; };
+		E91234560006 /* KokoroClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = E91234550008 /* KokoroClient.swift */; };
+		E91234560007 /* KokoroSynth.py in Resources */ = {isa = PBXBuildFile; fileRef = E91234550009 /* KokoroSynth.py */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -22,6 +24,8 @@
 		E91234550005 /* TimeAnnouncer.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = TimeAnnouncer.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		E91234550006 /* KeychainHelper.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KeychainHelper.swift; sourceTree = "<group>"; };
 		E91234550007 /* ElevenLabsClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElevenLabsClient.swift; sourceTree = "<group>"; };
+		E91234550008 /* KokoroClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KokoroClient.swift; sourceTree = "<group>"; };
+		E91234550009 /* KokoroSynth.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = KokoroSynth.py; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -51,6 +55,8 @@
 				E91234550003 /* SettingsManager.swift */,
 				E91234550006 /* KeychainHelper.swift */,
 				E91234550007 /* ElevenLabsClient.swift */,
+				E91234550008 /* KokoroClient.swift */,
+				E91234550009 /* KokoroSynth.py */,
 				E91234550004 /* Info.plist */,
 			);
 			path = TimeAnnouncer;
@@ -122,6 +128,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				E91234560007 /* KokoroSynth.py in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -137,6 +144,7 @@
 				E91234560003 /* SettingsManager.swift in Sources */,
 				E91234560004 /* KeychainHelper.swift in Sources */,
 				E91234560005 /* ElevenLabsClient.swift in Sources */,
+				E91234560006 /* KokoroClient.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

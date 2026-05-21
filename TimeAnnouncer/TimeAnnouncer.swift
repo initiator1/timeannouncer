@@ -181,6 +181,8 @@ class TimeAnnouncer {
         switch settingsManager.voiceProvider {
         case .elevenlabs:
             announceWithElevenLabs(timeString)
+        case .kokoro:
+            announceWithKokoro(timeString)
         case .system:
             announceWithSystemVoice(timeString)
         }
@@ -205,6 +207,26 @@ class TimeAnnouncer {
             } catch {
                 guard !Task.isCancelled else { return }
                 print("ElevenLabs error: \(error), falling back to system voice")
+                await MainActor.run {
+                    announceWithSystemVoice(text)
+                }
+            }
+        }
+    }
+
+    private func announceWithKokoro(_ text: String) {
+        currentAnnouncementTask?.cancel()
+        currentAnnouncementTask = Task {
+            guard !Task.isCancelled else { return }
+            do {
+                let audioData = try await KokoroClient.fetchSpeech(text: text)
+                guard !Task.isCancelled else { return }
+                await MainActor.run {
+                    playAudio(data: audioData)
+                }
+            } catch {
+                guard !Task.isCancelled else { return }
+                print("Kokoro error: \(error), falling back to system voice")
                 await MainActor.run {
                     announceWithSystemVoice(text)
                 }
