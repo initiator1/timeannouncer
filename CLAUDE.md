@@ -38,7 +38,7 @@ Native Swift/Xcode project with no external package dependencies (no SPM, no Coc
 
 2. **Graceful degradation** - ElevenLabs errors silently fall back to `NSSpeechSynthesizer`. Audio playback uses `AVAudioPlayer` for ElevenLabs, `NSSpeechSynthesizer` for system voice.
 
-3. **Anti-double-fire guard** - `minimumAnnouncementGap` (2s) prevents rapid announcements at clock boundaries.
+3. **Anti-double-fire guard** - `minimumAnnouncementGap` (2s) prevents rapid announcements at clock boundaries. Clock-aligned timer callbacks also re-check the actual wall clock before speaking and only announce inside a short post-boundary grace window, preventing early/stale timers from speaking non-boundary minutes like `:59`.
 
 4. **Menu bar only** - `LSUIElement=true` in Info.plist + `NSApp.setActivationPolicy(.accessory)` hides dock icon.
 
