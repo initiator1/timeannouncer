@@ -207,7 +207,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @objc func showCustomInterval() {
         let alert = NSAlert()
         alert.messageText = "Set Custom Interval"
-        alert.informativeText = "Enter the number of minutes between announcements:"
+        alert.informativeText = settingsManager.timingMode == .clockAligned
+            ? "Clock-aligned intervals must divide evenly into an hour, such as 5, 10, 15, 20, 30, or 60."
+            : "Enter the number of minutes between announcements:"
         alert.alertStyle = .informational
         alert.addButton(withTitle: "OK")
         alert.addButton(withTitle: "Cancel")
@@ -219,6 +221,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let response = alert.runModal()
         if response == .alertFirstButtonReturn {
             if let minutes = Int(inputField.stringValue), minutes > 0 {
+                guard settingsManager.timingMode != .clockAligned ||
+                        TimeAnnouncementSchedule.isClockAlignedCompatibleInterval(minutes) else {
+                    showAlert(
+                        title: "Invalid Clock-Aligned Interval",
+                        message: "Use an interval that divides evenly into an hour: 5, 10, 15, 20, 30, or 60 minutes. Switch to Fixed Interval for arbitrary values."
+                    )
+                    return
+                }
+
                 settingsManager.intervalMinutes = minutes
                 timeAnnouncer?.updateInterval(minutes: minutes)
                 setupMenu()
@@ -228,6 +239,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc func selectClockAligned() {
         settingsManager.timingMode = .clockAligned
+        if !TimeAnnouncementSchedule.isClockAlignedCompatibleInterval(settingsManager.intervalMinutes) {
+            settingsManager.intervalMinutes = TimeAnnouncementSchedule.defaultClockAlignedIntervalMinutes
+            showAlert(
+                title: "Interval Reset",
+                message: "Clock-aligned mode only supports intervals that divide evenly into an hour. The interval was reset to 60 minutes."
+            )
+        }
         if settingsManager.isEnabled {
             timeAnnouncer?.start()
         }
@@ -297,10 +315,23 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if response == .alertFirstButtonReturn {
             let key = inputField.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
             if !key.isEmpty {
-                settingsManager.setElevenLabsApiKey(key)
-                setupMenu()
+                do {
+                    try settingsManager.setElevenLabsApiKey(key)
+                    setupMenu()
+                } catch {
+                    showAlert(title: "Could Not Save API Key", message: error.localizedDescription)
+                }
             }
         }
+    }
+
+    private func showAlert(title: String, message: String) {
+        let alert = NSAlert()
+        alert.messageText = title
+        alert.informativeText = message
+        alert.alertStyle = .warning
+        alert.addButton(withTitle: "OK")
+        alert.runModal()
     }
 
     @objc func toggleLaunchAtLogin() {

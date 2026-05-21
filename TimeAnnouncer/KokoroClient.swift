@@ -85,16 +85,23 @@ struct KokoroClient {
         environment["PATH"] = "\(appSupportDirectory.appendingPathComponent("venv/bin").path):\(environment["PATH"] ?? "/usr/bin:/bin")"
         process.environment = environment
 
-        let errorPipe = Pipe()
-        process.standardError = errorPipe
-        process.standardOutput = Pipe()
+        let errorURL = cacheDirectory.appendingPathComponent("\(UUID().uuidString).stderr")
+        FileManager.default.createFile(atPath: errorURL.path, contents: nil)
+        let errorHandle = try FileHandle(forWritingTo: errorURL)
+        defer {
+            try? errorHandle.close()
+            try? FileManager.default.removeItem(at: errorURL)
+        }
+
+        process.standardError = errorHandle
+        process.standardOutput = FileHandle.nullDevice
 
         try process.run()
         process.waitUntilExit()
+        try? errorHandle.close()
 
         guard process.terminationStatus == 0 else {
-            let errorData = errorPipe.fileHandleForReading.readDataToEndOfFile()
-            let message = String(data: errorData, encoding: .utf8)?
+            let message = (try? String(contentsOf: errorURL, encoding: .utf8))?
                 .trimmingCharacters(in: .whitespacesAndNewlines) ?? "No error output"
             throw KokoroError.synthesisFailed(status: process.terminationStatus, message: message)
         }

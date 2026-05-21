@@ -101,7 +101,7 @@ class SettingsManager {
         return !key.isEmpty
     }
 
-    func setElevenLabsApiKey(_ key: String) {
-        KeychainHelper.save(key, forKey: "elevenlabs_api_key")
+    func setElevenLabsApiKey(_ key: String) throws {
+        try KeychainHelper.save(key, forKey: "elevenlabs_api_key")
     }
 }
