@@ -121,12 +121,21 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         systemVoiceItem.state = settingsManager.voiceProvider == .system ? .on : .off
         voiceMenu.addItem(systemVoiceItem)
 
+        let kokoroItem = NSMenuItem(title: "Kokoro 82M - af_heart", action: #selector(selectKokoroVoice), keyEquivalent: "")
+        kokoroItem.target = self
+        kokoroItem.state = settingsManager.voiceProvider == .kokoro ? .on : .off
+        voiceMenu.addItem(kokoroItem)
+
         let elevenLabsItem = NSMenuItem(title: "ElevenLabs - Zara", action: #selector(selectElevenLabsVoice), keyEquivalent: "")
         elevenLabsItem.target = self
         elevenLabsItem.state = settingsManager.voiceProvider == .elevenlabs ? .on : .off
         voiceMenu.addItem(elevenLabsItem)
 
         voiceMenu.addItem(NSMenuItem.separator())
+
+        let kokoroSetupItem = NSMenuItem(title: KokoroClient.isInstalled ? "Repair Kokoro Install..." : "Install Kokoro...", action: #selector(showKokoroSetupDialog), keyEquivalent: "")
+        kokoroSetupItem.target = self
+        voiceMenu.addItem(kokoroSetupItem)
 
         let apiKeyItem = NSMenuItem(title: "Set ElevenLabs API Key...", action: #selector(showApiKeyDialog), keyEquivalent: "")
         apiKeyItem.target = self
@@ -243,6 +252,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         setupMenu()
     }
 
+    @objc func selectKokoroVoice() {
+        settingsManager.voiceProvider = .kokoro
+        if !KokoroClient.isInstalled {
+            showKokoroSetupDialog()
+        }
+        setupMenu()
+    }
+
     @objc func selectElevenLabsVoice() {
         if !settingsManager.hasElevenLabsApiKey {
             showApiKeyDialog()
@@ -251,6 +268,17 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             settingsManager.voiceProvider = .elevenlabs
             setupMenu()
         }
+    }
+
+    @objc func showKokoroSetupDialog() {
+        let alert = NSAlert()
+        alert.messageText = KokoroClient.isInstalled ? "Kokoro is installed" : "Install Kokoro"
+        alert.informativeText = KokoroClient.isInstalled
+            ? "Kokoro is available locally. To rebuild the environment, run \(KokoroClient.installCommand) from the project directory."
+            : "Kokoro needs a local Python environment before it can speak. Run \(KokoroClient.installCommand) from the project directory, then choose Kokoro again."
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: "OK")
+        alert.runModal()
     }
 
     @objc func showApiKeyDialog() {
