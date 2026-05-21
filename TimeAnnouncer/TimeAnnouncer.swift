@@ -12,6 +12,7 @@ class TimeAnnouncer {
     private var lastAnnouncementTime: Date?
     private let minimumAnnouncementGap: TimeInterval = 2.0
     private let clockBoundaryGracePeriod: TimeInterval = 2.0
+    private var audioGeneration = 0
 
     // Fix 3: Track in-flight ElevenLabs tasks for cancellation
     private var currentAnnouncementTask: Task<Void, Never>?
@@ -27,40 +28,9 @@ class TimeAnnouncer {
 
     /// Calculates the delay until the next clock-aligned announcement time
     private func calculateDelayToNextBoundary() -> TimeInterval {
-        let now = Date()
-        let calendar = Calendar.current
-        let minutes = calendar.component(.minute, from: now)
-        let seconds = calendar.component(.second, from: now)
-        let nanoseconds = calendar.component(.nanosecond, from: now)
-
-        // Include sub-second precision to hit exact boundaries
-        let fractionalSeconds = Double(nanoseconds) / 1_000_000_000.0
-        let totalCurrentSeconds = Double(seconds) + fractionalSeconds
-
-        let intervalMinutes = settingsManager.intervalMinutes
-
-        if intervalMinutes >= 60 {
-            // For hourly, align to the top of the hour (:00)
-            let minutesUntilNextHour = (60 - minutes) % 60
-            if minutesUntilNextHour == 0 && totalCurrentSeconds < 1.0 {
-                // We're within 1 second of the hour, announce now
-                return 0
-            }
-            let actualMinutesUntil = minutesUntilNextHour == 0 ? 60 : minutesUntilNextHour
-            return TimeInterval(actualMinutesUntil * 60) - totalCurrentSeconds
-        } else {
-            // For sub-hourly intervals, align to clock boundaries
-            // e.g., 30-min -> :00 and :30, 15-min -> :00, :15, :30, :45
-            let currentIntervalPosition = minutes % intervalMinutes
-            let minutesUntilNext = (intervalMinutes - currentIntervalPosition) % intervalMinutes
-
-            if minutesUntilNext == 0 && totalCurrentSeconds < 1.0 {
-                // We're within 1 second of a boundary, announce now
-                return 0
-            }
-            let actualMinutesUntil = minutesUntilNext == 0 ? intervalMinutes : minutesUntilNext
-            return TimeInterval(actualMinutesUntil * 60) - totalCurrentSeconds
-        }
+        TimeAnnouncementSchedule.delayToNextClockAlignedBoundary(
+            intervalMinutes: settingsManager.intervalMinutes
+        )
     }
 
     /// Schedules the next announcement based on the current timing mode
@@ -101,22 +71,11 @@ class TimeAnnouncer {
     }
 
     private func isClockAlignedAnnouncementTime(at date: Date = Date()) -> Bool {
-        let calendar = Calendar.current
-        let minute = calendar.component(.minute, from: date)
-        let second = calendar.component(.second, from: date)
-        let nanosecond = calendar.component(.nanosecond, from: date)
-        let secondsAfterMinute = Double(second) + Double(nanosecond) / 1_000_000_000.0
-
-        guard secondsAfterMinute < clockBoundaryGracePeriod else {
-            return false
-        }
-
-        let intervalMinutes = settingsManager.intervalMinutes
-        if intervalMinutes >= 60 {
-            return minute == 0
-        }
-
-        return minute % intervalMinutes == 0
+        TimeAnnouncementSchedule.isClockAlignedAnnouncementTime(
+            at: date,
+            intervalMinutes: settingsManager.intervalMinutes,
+            gracePeriod: clockBoundaryGracePeriod
+        )
     }
 
     /// Waits 1.5s so calculateDelayToNextBoundary() sees totalCurrentSeconds >= 1.0
@@ -149,6 +108,7 @@ class TimeAnnouncer {
     func stop() {
         timer?.invalidate()
         timer = nil
+        stopAllAudio()
     }
 
     func updateInterval(minutes: Int) {
@@ -164,12 +124,19 @@ class TimeAnnouncer {
     }
 
     // Fix 2: Clean audio state before new playback
-    private func stopAllAudio() {
+    @discardableResult
+    private func stopAllAudio() -> Int {
+        audioGeneration += 1
         currentAnnouncementTask?.cancel()
         currentAnnouncementTask = nil
         audioPlayer?.stop()
         audioPlayer = nil
         synthesizer.stopSpeaking()
+        return audioGeneration
+    }
+
+    private func isCurrentAnnouncement(_ generation: Int) -> Bool {
+        audioGeneration == generation
     }
 
     func announceCurrentTime() {
@@ -190,45 +157,57 @@ class TimeAnnouncer {
 
     private func announceWithSystemVoice(_ text: String) {
         stopAllAudio()
+        speakWithSystemVoice(text)
+    }
+
+    private func speakWithSystemVoice(_ text: String) {
         synthesizer.volume = settingsManager.volume
         synthesizer.startSpeaking(text)
     }
 
     private func announceWithElevenLabs(_ text: String) {
-        currentAnnouncementTask?.cancel()
-        currentAnnouncementTask = Task {
+        let generation = stopAllAudio()
+        currentAnnouncementTask = Task { [weak self] in
             guard !Task.isCancelled else { return }
             do {
                 let audioData = try await ElevenLabsClient.fetchSpeech(text: text)
                 guard !Task.isCancelled else { return }
-                await MainActor.run {
-                    playAudio(data: audioData)
+                await MainActor.run { [weak self] in
+                    guard let self = self, self.isCurrentAnnouncement(generation) else { return }
+                    self.currentAnnouncementTask = nil
+                    self.playAudio(data: audioData)
                 }
             } catch {
                 guard !Task.isCancelled else { return }
                 print("ElevenLabs error: \(error), falling back to system voice")
-                await MainActor.run {
-                    announceWithSystemVoice(text)
+                await MainActor.run { [weak self] in
+                    guard let self = self, self.isCurrentAnnouncement(generation) else { return }
+                    self.currentAnnouncementTask = nil
+                    self.speakWithSystemVoice(text)
                 }
             }
         }
     }
 
     private func announceWithKokoro(_ text: String) {
-        currentAnnouncementTask?.cancel()
-        currentAnnouncementTask = Task {
+        let generation = stopAllAudio()
+        currentAnnouncementTask = Task { [weak self] in
             guard !Task.isCancelled else { return }
             do {
                 let audioData = try await KokoroClient.fetchSpeech(text: text)
                 guard !Task.isCancelled else { return }
-                await MainActor.run {
-                    playAudio(data: audioData)
+                await MainActor.run { [weak self] in
+                    guard let self = self, self.isCurrentAnnouncement(generation) else { return }
+                    self.currentAnnouncementTask = nil
+                    self.playAudio(data: audioData)
                 }
             } catch {
                 guard !Task.isCancelled else { return }
                 print("Kokoro error: \(error), falling back to system voice")
-                await MainActor.run {
-                    announceWithSystemVoice(text)
+                await MainActor.run { [weak self] in
+                    guard let self = self, self.isCurrentAnnouncement(generation) else { return }
+                    self.currentAnnouncementTask = nil
+                    self.speakWithSystemVoice(text)
                 }
             }
         }

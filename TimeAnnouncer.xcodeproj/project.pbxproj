@@ -14,7 +14,19 @@
 		E91234560005 /* ElevenLabsClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = E91234550007 /* ElevenLabsClient.swift */; };
 		E91234560006 /* KokoroClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = E91234550008 /* KokoroClient.swift */; };
 		E91234560007 /* KokoroSynth.py in Resources */ = {isa = PBXBuildFile; fileRef = E91234550009 /* KokoroSynth.py */; };
+		E91234560008 /* TimeAnnouncementSchedule.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9123455000A /* TimeAnnouncementSchedule.swift */; };
+		E91234560009 /* TimeAnnouncementScheduleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9123455000B /* TimeAnnouncementScheduleTests.swift */; };
 /* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		E91234540001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = E912345D0001 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = E91234590001;
+			remoteInfo = TimeAnnouncer;
+		};
+/* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
 		E91234550001 /* TimeAnnouncerApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeAnnouncerApp.swift; sourceTree = "<group>"; };
@@ -26,10 +38,20 @@
 		E91234550007 /* ElevenLabsClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElevenLabsClient.swift; sourceTree = "<group>"; };
 		E91234550008 /* KokoroClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KokoroClient.swift; sourceTree = "<group>"; };
 		E91234550009 /* KokoroSynth.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = KokoroSynth.py; sourceTree = "<group>"; };
+		E9123455000A /* TimeAnnouncementSchedule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeAnnouncementSchedule.swift; sourceTree = "<group>"; };
+		E9123455000B /* TimeAnnouncementScheduleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeAnnouncementScheduleTests.swift; sourceTree = "<group>"; };
+		E9123455000C /* TimeAnnouncerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TimeAnnouncerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		E91234570001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E91234570002 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -43,6 +65,7 @@
 			isa = PBXGroup;
 			children = (
 				E91234580002 /* TimeAnnouncer */,
+				E91234580004 /* TimeAnnouncerTests */,
 				E91234580003 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -57,6 +80,7 @@
 				E91234550007 /* ElevenLabsClient.swift */,
 				E91234550008 /* KokoroClient.swift */,
 				E91234550009 /* KokoroSynth.py */,
+				E9123455000A /* TimeAnnouncementSchedule.swift */,
 				E91234550004 /* Info.plist */,
 			);
 			path = TimeAnnouncer;
@@ -66,8 +90,17 @@
 			isa = PBXGroup;
 			children = (
 				E91234550005 /* TimeAnnouncer.app */,
+				E9123455000C /* TimeAnnouncerTests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		E91234580004 /* TimeAnnouncerTests */ = {
+			isa = PBXGroup;
+			children = (
+				E9123455000B /* TimeAnnouncementScheduleTests.swift */,
+			);
+			path = TimeAnnouncerTests;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -90,6 +123,24 @@
 			productReference = E91234550005 /* TimeAnnouncer.app */;
 			productType = "com.apple.product-type.application";
 		};
+		E91234590002 /* TimeAnnouncerTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = E912345A0002 /* Build configuration list for PBXNativeTarget "TimeAnnouncerTests" */;
+			buildPhases = (
+				E912345B0002 /* Sources */,
+				E91234570002 /* Frameworks */,
+				E912345C0002 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				E91234530001 /* PBXTargetDependency */,
+			);
+			name = TimeAnnouncerTests;
+			productName = TimeAnnouncerTests;
+			productReference = E9123455000C /* TimeAnnouncerTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -102,6 +153,10 @@
 				TargetAttributes = {
 					E91234590001 = {
 						CreatedOnToolsVersion = 15.0;
+					};
+					E91234590002 = {
+						CreatedOnToolsVersion = 15.0;
+						TestTargetID = E91234590001;
 					};
 				};
 			};
@@ -119,6 +174,7 @@
 			projectRoot = "";
 			targets = (
 				E91234590001 /* TimeAnnouncer */,
+				E91234590002 /* TimeAnnouncerTests */,
 			);
 		};
 /* End PBXProject section */
@@ -129,6 +185,13 @@
 			buildActionMask = 2147483647;
 			files = (
 				E91234560007 /* KokoroSynth.py in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E912345C0002 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -145,10 +208,27 @@
 				E91234560004 /* KeychainHelper.swift in Sources */,
 				E91234560005 /* ElevenLabsClient.swift in Sources */,
 				E91234560006 /* KokoroClient.swift in Sources */,
+				E91234560008 /* TimeAnnouncementSchedule.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+		E912345B0002 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				E91234560009 /* TimeAnnouncementScheduleTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		E91234530001 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = E91234590001 /* TimeAnnouncer */;
+			targetProxy = E91234540001 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		E912345F0001 /* Debug */ = {
@@ -317,6 +397,46 @@
 			};
 			name = Release;
 		};
+		E91234600003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.timeannouncer.app.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/TimeAnnouncer.app/Contents/MacOS/TimeAnnouncer";
+			};
+			name = Debug;
+		};
+		E91234600004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@loader_path/../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 14.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.timeannouncer.app.tests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_VERSION = 5.0;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/TimeAnnouncer.app/Contents/MacOS/TimeAnnouncer";
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -325,6 +445,15 @@
 			buildConfigurations = (
 				E91234600001 /* Debug */,
 				E91234600002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		E912345A0002 /* Build configuration list for PBXNativeTarget "TimeAnnouncerTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				E91234600003 /* Debug */,
+				E91234600004 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;

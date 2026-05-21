@@ -12,18 +12,20 @@ Native Swift/Xcode project with no external package dependencies (no SPM, no Coc
 
 - **Open**: `open TimeAnnouncer.xcodeproj`
 - **Build (CLI)**: `xcodebuild -project TimeAnnouncer.xcodeproj -scheme TimeAnnouncer -configuration Debug build`
+- **Test (CLI)**: `xcodebuild test -project TimeAnnouncer.xcodeproj -scheme TimeAnnouncer -destination 'platform=macOS,arch=arm64'`
 - **Build (Xcode)**: Cmd+B
 - **Run (Xcode)**: Cmd+R
-- **No tests exist** in this project
+- **Tests** live in `TimeAnnouncerTests/`
 
 ## Architecture
 
-5-file project, all in `TimeAnnouncer/`:
+Small native project, with app sources in `TimeAnnouncer/` and tests in `TimeAnnouncerTests/`:
 
 | File | Role |
 |------|------|
 | `TimeAnnouncerApp.swift` | App entry point, AppDelegate, menu bar UI (NSStatusBar + NSMenu) |
-| `TimeAnnouncer.swift` | Core timer logic, time formatting to natural language, speech output |
+| `TimeAnnouncer.swift` | Core timer orchestration, time formatting to natural language, speech output |
+| `TimeAnnouncementSchedule.swift` | Clock-aligned interval policy and boundary calculations |
 | `SettingsManager.swift` | UserDefaults wrapper for preferences |
 | `KeychainHelper.swift` | macOS Security framework wrapper for API key storage |
 | `ElevenLabsClient.swift` | Async HTTP client for ElevenLabs TTS API |
@@ -52,6 +54,7 @@ Native Swift/Xcode project with no external package dependencies (no SPM, no Coc
 - **Keychain key name**: `elevenlabs_api_key` (service: `com.timeannouncer.app`). Referenced in both `SettingsManager` and `ElevenLabsClient`.
 - **ElevenLabs voice/model are hardcoded**: Voice ID `jqcCZkN6Knx8BJ5TBdYR` (Zara), Model `eleven_flash_v2_5`.
 - **Kokoro voice/cache are hardcoded**: Voice `af_heart`, venv `~/Library/Application Support/TimeAnnouncer/Kokoro/venv`, generated WAV cache `~/Library/Caches/TimeAnnouncer/Kokoro`.
+- **Clock-aligned custom intervals** must divide evenly into an hour. Fixed interval mode accepts arbitrary positive minute values.
 - **UserDefaults defaults**: `isEnabled` defaults to `true` (not standard UserDefaults false), `intervalMinutes` defaults to `60`, `voiceProvider` defaults to `kokoro`, `timingMode` defaults to `clockAligned`, `volume` defaults to `0.1`.
 - **Menu rebuilds entirely** on every state change via `setupMenu()` — no incremental updates.
 - **Time speech format**: Hours are words ("three"), minutes use "oh" prefix for single digits ("three oh five"). AM/PM only spoken on the hour.
