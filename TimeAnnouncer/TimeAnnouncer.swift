@@ -11,6 +11,7 @@ class TimeAnnouncer {
     // Fix 1: Prevent double-firing at clock boundaries
     private var lastAnnouncementTime: Date?
     private let minimumAnnouncementGap: TimeInterval = 2.0
+    private let clockBoundaryGracePeriod: TimeInterval = 2.0
 
     // Fix 3: Track in-flight ElevenLabs tasks for cancellation
     private var currentAnnouncementTask: Task<Void, Never>?
@@ -77,15 +78,45 @@ class TimeAnnouncer {
         let delay = calculateDelayToNextBoundary()
 
         if delay == 0 {
-            // At a boundary on startup — announce and reschedule past the boundary window
+            handleClockAlignedTimerFire()
+        } else {
+            scheduleTimer(after: delay) { [weak self] in
+                self?.handleClockAlignedTimerFire()
+            }
+        }
+    }
+
+    private func handleClockAlignedTimerFire() {
+        if isClockAlignedAnnouncementTime() {
             announceCurrentTime()
             rescheduleAfterBoundary()
         } else {
-            scheduleTimer(after: delay) { [weak self] in
-                self?.announceCurrentTime()
-                self?.rescheduleAfterBoundary()
+            // Timer callbacks can arrive at the edge of a boundary. Re-check the
+            // wall clock before speaking so a :00 timer cannot announce :59.
+            let retryDelay = max(calculateDelayToNextBoundary(), 0.05)
+            scheduleTimer(after: retryDelay) { [weak self] in
+                self?.handleClockAlignedTimerFire()
             }
         }
+    }
+
+    private func isClockAlignedAnnouncementTime(at date: Date = Date()) -> Bool {
+        let calendar = Calendar.current
+        let minute = calendar.component(.minute, from: date)
+        let second = calendar.component(.second, from: date)
+        let nanosecond = calendar.component(.nanosecond, from: date)
+        let secondsAfterMinute = Double(second) + Double(nanosecond) / 1_000_000_000.0
+
+        guard secondsAfterMinute < clockBoundaryGracePeriod else {
+            return false
+        }
+
+        let intervalMinutes = settingsManager.intervalMinutes
+        if intervalMinutes >= 60 {
+            return minute == 0
+        }
+
+        return minute % intervalMinutes == 0
     }
 
     /// Waits 1.5s so calculateDelayToNextBoundary() sees totalCurrentSeconds >= 1.0
