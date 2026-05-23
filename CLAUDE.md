@@ -29,8 +29,8 @@ Small native project, with app sources in `TimeAnnouncer/` and tests in `TimeAnn
 | `SettingsManager.swift` | UserDefaults wrapper for preferences |
 | `KeychainHelper.swift` | macOS Security framework wrapper for API key storage |
 | `ElevenLabsClient.swift` | Async HTTP client for ElevenLabs TTS API |
-| `KokoroClient.swift` | Local Kokoro TTS bridge, cache, and Python process runner |
-| `KokoroSynth.py` | Bundled Python Kokoro synthesis helper |
+| `KokoroClient.swift` | Local Kokoro TTS bridge, cache, and warmed Python worker |
+| `KokoroSynth.py` | Bundled Python Kokoro synthesis helper and worker protocol |
 
 ### Data Flow
 
@@ -53,7 +53,7 @@ Small native project, with app sources in `TimeAnnouncer/` and tests in `TimeAnn
 - **Volume** defaults to `0.1`, configurable via menu (10%/25%/50%/75%/100%). Stored in `SettingsManager.volume`, read at announcement time — no timer restart needed.
 - **Keychain key name**: `elevenlabs_api_key` (service: `com.timeannouncer.app`). Referenced in both `SettingsManager` and `ElevenLabsClient`.
 - **ElevenLabs voice/model are hardcoded**: Voice ID `jqcCZkN6Knx8BJ5TBdYR` (Zara), Model `eleven_flash_v2_5`.
-- **Kokoro voice/cache are hardcoded**: Voice `af_heart`, venv `~/Library/Application Support/TimeAnnouncer/Kokoro/venv`, generated WAV cache `~/Library/Caches/TimeAnnouncer/Kokoro`.
+- **Kokoro voice/cache are hardcoded**: Voice `af_heart`, venv `~/Library/Application Support/TimeAnnouncer/Kokoro/venv`, generated WAV cache `~/Library/Caches/TimeAnnouncer/Kokoro`. When Kokoro is selected, the app warms a long-lived local Python worker so manual announcements do not reload the model for each click.
 - **Clock-aligned custom intervals** must divide evenly into an hour. Fixed interval mode accepts arbitrary positive minute values.
 - **UserDefaults defaults**: `isEnabled` defaults to `true` (not standard UserDefaults false), `intervalMinutes` defaults to `60`, `voiceProvider` defaults to `kokoro`, `timingMode` defaults to `clockAligned`, `volume` defaults to `0.1`.
 - **Menu rebuilds entirely** on every state change via `setupMenu()` — no incremental updates.

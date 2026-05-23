@@ -16,6 +16,7 @@ class TimeAnnouncer {
 
     // Fix 3: Track in-flight ElevenLabs tasks for cancellation
     private var currentAnnouncementTask: Task<Void, Never>?
+    private var pendingAnnouncementText: String?
 
     init(settingsManager: SettingsManager) {
         self.settingsManager = settingsManager
@@ -129,6 +130,7 @@ class TimeAnnouncer {
         audioGeneration += 1
         currentAnnouncementTask?.cancel()
         currentAnnouncementTask = nil
+        pendingAnnouncementText = nil
         audioPlayer?.stop()
         audioPlayer = nil
         synthesizer.stopSpeaking()
@@ -139,11 +141,14 @@ class TimeAnnouncer {
         audioGeneration == generation
     }
 
-    func announceCurrentTime() {
-        guard shouldAnnounce() else { return }
-        lastAnnouncementTime = Date()
-
+    func announceCurrentTime(force: Bool = false) {
         let timeString = formatTimeForSpeech()
+        if force, currentAnnouncementTask != nil, pendingAnnouncementText == timeString {
+            return
+        }
+
+        guard force || shouldAnnounce() else { return }
+        lastAnnouncementTime = Date()
 
         switch settingsManager.voiceProvider {
         case .elevenlabs:
@@ -167,6 +172,7 @@ class TimeAnnouncer {
 
     private func announceWithElevenLabs(_ text: String) {
         let generation = stopAllAudio()
+        pendingAnnouncementText = text
         currentAnnouncementTask = Task { [weak self] in
             guard !Task.isCancelled else { return }
             do {
@@ -175,6 +181,7 @@ class TimeAnnouncer {
                 await MainActor.run { [weak self] in
                     guard let self = self, self.isCurrentAnnouncement(generation) else { return }
                     self.currentAnnouncementTask = nil
+                    self.pendingAnnouncementText = nil
                     self.playAudio(data: audioData)
                 }
             } catch {
@@ -183,6 +190,7 @@ class TimeAnnouncer {
                 await MainActor.run { [weak self] in
                     guard let self = self, self.isCurrentAnnouncement(generation) else { return }
                     self.currentAnnouncementTask = nil
+                    self.pendingAnnouncementText = nil
                     self.speakWithSystemVoice(text)
                 }
             }
@@ -191,6 +199,7 @@ class TimeAnnouncer {
 
     private func announceWithKokoro(_ text: String) {
         let generation = stopAllAudio()
+        pendingAnnouncementText = text
         currentAnnouncementTask = Task { [weak self] in
             guard !Task.isCancelled else { return }
             do {
@@ -199,6 +208,7 @@ class TimeAnnouncer {
                 await MainActor.run { [weak self] in
                     guard let self = self, self.isCurrentAnnouncement(generation) else { return }
                     self.currentAnnouncementTask = nil
+                    self.pendingAnnouncementText = nil
                     self.playAudio(data: audioData)
                 }
             } catch {
@@ -207,6 +217,7 @@ class TimeAnnouncer {
                 await MainActor.run { [weak self] in
                     guard let self = self, self.isCurrentAnnouncement(generation) else { return }
                     self.currentAnnouncementTask = nil
+                    self.pendingAnnouncementText = nil
                     self.speakWithSystemVoice(text)
                 }
             }

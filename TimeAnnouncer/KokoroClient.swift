@@ -6,6 +6,7 @@ enum KokoroError: Error, LocalizedError {
     case pythonNotFound(path: String)
     case synthesisFailed(status: Int32, message: String)
     case outputNotFound
+    case workerProtocol(String)
 
     var errorDescription: String? {
         switch self {
@@ -17,12 +18,15 @@ enum KokoroError: Error, LocalizedError {
             return "Kokoro synthesis failed with status \(status): \(message)"
         case .outputNotFound:
             return "Kokoro did not produce an audio file."
+        case .workerProtocol(let message):
+            return "Kokoro worker protocol error: \(message)"
         }
     }
 }
 
 struct KokoroClient {
     static let defaultVoice = "af_heart"
+    private static let worker = KokoroWorker()
 
     private static let appSupportDirectory = FileManager.default
         .homeDirectoryForCurrentUser
@@ -46,13 +50,25 @@ struct KokoroClient {
         FileManager.default.isExecutableFile(atPath: pythonURL.path)
     }
 
-    static func fetchSpeech(text: String, voice: String = defaultVoice) async throws -> Data {
-        try await Task.detached(priority: .userInitiated) {
-            try synthesizeSpeech(text: text, voice: voice)
-        }.value
+    static func prepareForSpeech() {
+        guard isInstalled else { return }
+
+        Task.detached(priority: .utility) {
+            do {
+                let scriptURL = try bundledScriptURL()
+                try FileManager.default.createDirectory(at: cacheDirectory, withIntermediateDirectories: true)
+                try await worker.prepare(
+                    pythonURL: pythonURL,
+                    scriptURL: scriptURL,
+                    appSupportDirectory: appSupportDirectory
+                )
+            } catch {
+                print("Kokoro prepare error: \(error)")
+            }
+        }
     }
 
-    private static func synthesizeSpeech(text: String, voice: String) throws -> Data {
+    static func fetchSpeech(text: String, voice: String = defaultVoice) async throws -> Data {
         guard FileManager.default.isExecutableFile(atPath: pythonURL.path) else {
             throw KokoroError.pythonNotFound(path: pythonURL.path)
         }
@@ -70,47 +86,28 @@ struct KokoroClient {
             try? FileManager.default.removeItem(at: tempURL)
         }
 
-        let process = Process()
-        process.executableURL = pythonURL
-        process.arguments = [
-            scriptURL.path,
-            "--text", text,
-            "--voice", voice,
-            "--output", tempURL.path
-        ]
-
-        var environment = ProcessInfo.processInfo.environment
-        environment["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
-        environment["VIRTUAL_ENV"] = appSupportDirectory.appendingPathComponent("venv", isDirectory: true).path
-        environment["PATH"] = "\(appSupportDirectory.appendingPathComponent("venv/bin").path):\(environment["PATH"] ?? "/usr/bin:/bin")"
-        process.environment = environment
-
-        let errorURL = cacheDirectory.appendingPathComponent("\(UUID().uuidString).stderr")
-        FileManager.default.createFile(atPath: errorURL.path, contents: nil)
-        let errorHandle = try FileHandle(forWritingTo: errorURL)
-        defer {
-            try? errorHandle.close()
-            try? FileManager.default.removeItem(at: errorURL)
-        }
-
-        process.standardError = errorHandle
-        process.standardOutput = FileHandle.nullDevice
-
-        try process.run()
-        process.waitUntilExit()
-        try? errorHandle.close()
-
-        guard process.terminationStatus == 0 else {
-            let message = (try? String(contentsOf: errorURL, encoding: .utf8))?
-                .trimmingCharacters(in: .whitespacesAndNewlines) ?? "No error output"
-            throw KokoroError.synthesisFailed(status: process.terminationStatus, message: message)
-        }
+        try await worker.synthesize(
+            text: text,
+            voice: voice,
+            outputURL: tempURL,
+            pythonURL: pythonURL,
+            scriptURL: scriptURL,
+            appSupportDirectory: appSupportDirectory
+        )
 
         guard FileManager.default.fileExists(atPath: tempURL.path) else {
             throw KokoroError.outputNotFound
         }
 
-        try FileManager.default.moveItem(at: tempURL, to: outputURL)
+        do {
+            try FileManager.default.moveItem(at: tempURL, to: outputURL)
+        } catch {
+            if let cachedAudio = try? Data(contentsOf: outputURL) {
+                return cachedAudio
+            }
+            throw error
+        }
+
         return try Data(contentsOf: outputURL)
     }
 
@@ -135,5 +132,161 @@ struct KokoroClient {
         let input = "kokoro-v1|\(voice)|\(text)"
         let digest = SHA256.hash(data: Data(input.utf8))
         return digest.map { String(format: "%02x", $0) }.joined()
+    }
+}
+
+private struct KokoroWorkerRequest: Encodable {
+    let text: String
+    let voice: String
+    let output: String
+}
+
+private struct KokoroWorkerResponse: Decodable {
+    let ready: Bool?
+    let ok: Bool?
+    let error: String?
+}
+
+private actor KokoroWorker {
+    private var process: Process?
+    private var inputHandle: FileHandle?
+    private var outputHandle: FileHandle?
+    private var outputBuffer = Data()
+
+    func prepare(
+        pythonURL: URL,
+        scriptURL: URL,
+        appSupportDirectory: URL
+    ) throws {
+        try ensureStarted(
+            pythonURL: pythonURL,
+            scriptURL: scriptURL,
+            appSupportDirectory: appSupportDirectory
+        )
+    }
+
+    func synthesize(
+        text: String,
+        voice: String,
+        outputURL: URL,
+        pythonURL: URL,
+        scriptURL: URL,
+        appSupportDirectory: URL
+    ) throws {
+        try ensureStarted(
+            pythonURL: pythonURL,
+            scriptURL: scriptURL,
+            appSupportDirectory: appSupportDirectory
+        )
+
+        let request = KokoroWorkerRequest(text: text, voice: voice, output: outputURL.path)
+        let requestData = try JSONEncoder().encode(request)
+
+        guard let inputHandle else {
+            throw KokoroError.workerProtocol("missing worker stdin")
+        }
+
+        inputHandle.write(requestData)
+        inputHandle.write(Data([0x0A]))
+
+        let response = try readWorkerResponse()
+        guard response.ok == true else {
+            throw KokoroError.synthesisFailed(status: -1, message: response.error ?? "Unknown worker error")
+        }
+    }
+
+    private func ensureStarted(
+        pythonURL: URL,
+        scriptURL: URL,
+        appSupportDirectory: URL
+    ) throws {
+        if process?.isRunning == true {
+            return
+        }
+
+        stopWorker()
+
+        let process = Process()
+        process.executableURL = pythonURL
+        process.arguments = [
+            scriptURL.path,
+            "--server",
+            "--voice", KokoroClient.defaultVoice
+        ]
+
+        var environment = ProcessInfo.processInfo.environment
+        environment["PYTORCH_ENABLE_MPS_FALLBACK"] = "1"
+        environment["VIRTUAL_ENV"] = appSupportDirectory.appendingPathComponent("venv", isDirectory: true).path
+        environment["PATH"] = "\(appSupportDirectory.appendingPathComponent("venv/bin").path):\(environment["PATH"] ?? "/usr/bin:/bin")"
+        process.environment = environment
+
+        let inputPipe = Pipe()
+        let outputPipe = Pipe()
+
+        process.standardInput = inputPipe
+        process.standardOutput = outputPipe
+        process.standardError = FileHandle.nullDevice
+
+        try process.run()
+
+        self.process = process
+        self.inputHandle = inputPipe.fileHandleForWriting
+        self.outputHandle = outputPipe.fileHandleForReading
+        self.outputBuffer = Data()
+
+        do {
+            let response = try readWorkerResponse()
+            guard response.ready == true else {
+                throw KokoroError.workerProtocol("worker did not send ready")
+            }
+        } catch {
+            stopWorker()
+            throw error
+        }
+    }
+
+    private func readWorkerResponse() throws -> KokoroWorkerResponse {
+        let data = try readWorkerLine()
+        do {
+            return try JSONDecoder().decode(KokoroWorkerResponse.self, from: data)
+        } catch {
+            let line = String(data: data, encoding: .utf8) ?? "<non-UTF8 response>"
+            throw KokoroError.workerProtocol("unexpected response: \(line)")
+        }
+    }
+
+    private func readWorkerLine() throws -> Data {
+        guard let outputHandle else {
+            throw KokoroError.workerProtocol("missing worker stdout")
+        }
+
+        while true {
+            if let newlineIndex = outputBuffer.firstIndex(of: 0x0A) {
+                let line = outputBuffer[..<newlineIndex]
+                let removeEnd = outputBuffer.index(after: newlineIndex)
+                outputBuffer.removeSubrange(outputBuffer.startIndex..<removeEnd)
+                return Data(line)
+            }
+
+            let chunk = outputHandle.availableData
+            if chunk.isEmpty {
+                stopWorker()
+                throw KokoroError.workerProtocol("worker exited before responding")
+            }
+
+            outputBuffer.append(chunk)
+        }
+    }
+
+    private func stopWorker() {
+        inputHandle = nil
+        outputHandle = nil
+
+        if process?.isRunning == true {
+            process?.terminate()
+        }
+        process = nil
+
+        outputBuffer = Data()
     }
 }
