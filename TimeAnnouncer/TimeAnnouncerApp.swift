@@ -35,6 +35,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Create the menu
         setupMenu()
 
+        if settingsManager.voiceProvider == .kokoro {
+            KokoroClient.prepareForSpeech()
+        }
+
         // Start announcing if enabled
         if settingsManager.isEnabled {
             timeAnnouncer?.start()
@@ -195,7 +199,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc func announceNow() {
-        timeAnnouncer?.announceCurrentTime()
+        timeAnnouncer?.announceCurrentTime(force: true)
     }
 
     @objc func setPresetInterval(_ sender: NSMenuItem) {
@@ -274,6 +278,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         settingsManager.voiceProvider = .kokoro
         if !KokoroClient.isInstalled {
             showKokoroSetupDialog()
+        } else {
+            KokoroClient.prepareForSpeech()
         }
         setupMenu()
     }
