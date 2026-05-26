@@ -25,3 +25,13 @@ Test:
 ```sh
 xcodebuild test -project TimeAnnouncer.xcodeproj -scheme TimeAnnouncer -destination 'platform=macOS,arch=arm64'
 ```
+
+## Release Build
+
+Direct-download release builds use Developer ID signing and hardened runtime:
+
+```sh
+./scripts/build-release.sh
+```
+
+See [docs/release-checklist.md](docs/release-checklist.md) for notarization and launch gates.
