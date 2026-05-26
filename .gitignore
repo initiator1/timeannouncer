@@ -7,6 +7,7 @@ xcuserdata/
 # Build products
 build/
 DerivedData/
+*.profraw
 
 # Local clawpatch state
 .clawpatch/

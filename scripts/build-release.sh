@@ -6,6 +6,8 @@ BUILD_ROOT="${ROOT_DIR}/build/release"
 DERIVED_DATA="${BUILD_ROOT}/DerivedData"
 APP_PATH="${DERIVED_DATA}/Build/Products/Release/TimeAnnouncer.app"
 ZIP_PATH="${BUILD_ROOT}/TimeAnnouncer.zip"
+DMG_STAGING="${BUILD_ROOT}/dmg-staging"
+DMG_PATH="${BUILD_ROOT}/TimeAnnouncer.dmg"
 
 TEAM_ID="${TEAM_ID:-MDWFZC6396}"
 SIGNING_IDENTITY="${SIGNING_IDENTITY:-Developer ID Application: Douglas Baker (${TEAM_ID})}"
@@ -23,6 +25,7 @@ require_tool() {
 require_tool xcodebuild
 require_tool codesign
 require_tool ditto
+require_tool hdiutil
 require_tool spctl
 require_tool xcrun
 
@@ -32,6 +35,22 @@ fi
 
 rm -rf "${BUILD_ROOT}"
 mkdir -p "${BUILD_ROOT}"
+
+create_dmg() {
+  rm -rf "${DMG_STAGING}" "${DMG_PATH}"
+  mkdir -p "${DMG_STAGING}"
+  ditto "${APP_PATH}" "${DMG_STAGING}/TimeAnnouncer.app"
+  ln -s /Applications "${DMG_STAGING}/Applications"
+  hdiutil create \
+    -volname "TimeAnnouncer" \
+    -srcfolder "${DMG_STAGING}" \
+    -ov \
+    -format UDZO \
+    "${DMG_PATH}"
+  codesign --force --sign "${SIGNING_IDENTITY}" "${DMG_PATH}"
+  codesign --verify --verbose=2 "${DMG_PATH}"
+  hdiutil verify "${DMG_PATH}"
+}
 
 xcodebuild \
   -project "${ROOT_DIR}/TimeAnnouncer.xcodeproj" \
@@ -61,17 +80,24 @@ fi
 codesign --verify --deep --strict --verbose=2 "${APP_PATH}"
 
 ditto -c -k --keepParent "${APP_PATH}" "${ZIP_PATH}"
+create_dmg
 
 echo "Built signed release app: ${APP_PATH}"
 echo "Created notarization zip: ${ZIP_PATH}"
+echo "Created signed installer disk image: ${DMG_PATH}"
 
 if [[ -n "${NOTARYTOOL_PROFILE}" ]]; then
   xcrun notarytool submit "${ZIP_PATH}" --keychain-profile "${NOTARYTOOL_PROFILE}" --wait
   xcrun stapler staple "${APP_PATH}"
   xcrun stapler validate "${APP_PATH}"
   ditto -c -k --keepParent "${APP_PATH}" "${ZIP_PATH}"
+  create_dmg
+  xcrun notarytool submit "${DMG_PATH}" --keychain-profile "${NOTARYTOOL_PROFILE}" --wait
+  xcrun stapler staple "${DMG_PATH}"
+  xcrun stapler validate "${DMG_PATH}"
   spctl --assess --type execute --verbose=4 "${APP_PATH}"
   echo "Notarized and stapled release app: ${APP_PATH}"
+  echo "Notarized and stapled installer disk image: ${DMG_PATH}"
 else
   echo "Notarization skipped. Set NOTARYTOOL_PROFILE to submit and staple."
   if spctl --assess --type execute --verbose=4 "${APP_PATH}"; then
