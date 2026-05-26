@@ -91,5 +91,5 @@ Before public distribution:
 
 - Notarytool credential profile.
 - Stapled release artifact.
-- Public download page or GitHub release.
+- Public download page or GitHub release through `scripts/publish-github-release.sh`.
 - Public support/contact path replacing the placeholder in `docs/support.md`.
