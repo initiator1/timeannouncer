@@ -1,0 +1,81 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+BUILD_ROOT="${ROOT_DIR}/build/release"
+DERIVED_DATA="${BUILD_ROOT}/DerivedData"
+APP_PATH="${DERIVED_DATA}/Build/Products/Release/TimeAnnouncer.app"
+ZIP_PATH="${BUILD_ROOT}/TimeAnnouncer.zip"
+
+TEAM_ID="${TEAM_ID:-MDWFZC6396}"
+SIGNING_IDENTITY="${SIGNING_IDENTITY:-Developer ID Application: Douglas Baker (${TEAM_ID})}"
+NOTARYTOOL_PROFILE="${NOTARYTOOL_PROFILE:-}"
+
+fail() {
+  echo "error: $*" >&2
+  exit 1
+}
+
+require_tool() {
+  command -v "$1" >/dev/null 2>&1 || fail "$1 is required"
+}
+
+require_tool xcodebuild
+require_tool codesign
+require_tool ditto
+require_tool spctl
+require_tool xcrun
+
+if ! security find-identity -v -p codesigning | grep -Fq "${SIGNING_IDENTITY}"; then
+  fail "missing signing identity: ${SIGNING_IDENTITY}"
+fi
+
+rm -rf "${BUILD_ROOT}"
+mkdir -p "${BUILD_ROOT}"
+
+xcodebuild \
+  -project "${ROOT_DIR}/TimeAnnouncer.xcodeproj" \
+  -scheme TimeAnnouncer \
+  -configuration Release \
+  -derivedDataPath "${DERIVED_DATA}" \
+  CODE_SIGN_STYLE=Manual \
+  DEVELOPMENT_TEAM="${TEAM_ID}" \
+  CODE_SIGN_IDENTITY="${SIGNING_IDENTITY}" \
+  ENABLE_HARDENED_RUNTIME=YES \
+  CODE_SIGN_INJECT_BASE_ENTITLEMENTS=NO \
+  build
+
+test -d "${APP_PATH}" || fail "Release app was not built at ${APP_PATH}"
+test -f "${APP_PATH}/Contents/Resources/KokoroSynth.py" || fail "KokoroSynth.py is missing from the app bundle"
+
+SIGNATURE_DETAILS="$(codesign -dv --verbose=4 "${APP_PATH}" 2>&1)"
+echo "${SIGNATURE_DETAILS}" | grep -Fq "Authority=${SIGNING_IDENTITY}" || fail "app is not signed with ${SIGNING_IDENTITY}"
+echo "${SIGNATURE_DETAILS}" | grep -Fq "TeamIdentifier=${TEAM_ID}" || fail "app is not signed with team ${TEAM_ID}"
+echo "${SIGNATURE_DETAILS}" | grep -Fq "flags=0x10000(runtime)" || fail "hardened runtime is not enabled"
+
+if codesign -d --entitlements :- "${APP_PATH}" 2>/dev/null | grep -Fq "get-task-allow"; then
+  fail "release signature contains get-task-allow"
+fi
+
+codesign --verify --deep --strict --verbose=2 "${APP_PATH}"
+
+ditto -c -k --keepParent "${APP_PATH}" "${ZIP_PATH}"
+
+echo "Built signed release app: ${APP_PATH}"
+echo "Created notarization zip: ${ZIP_PATH}"
+
+if [[ -n "${NOTARYTOOL_PROFILE}" ]]; then
+  xcrun notarytool submit "${ZIP_PATH}" --keychain-profile "${NOTARYTOOL_PROFILE}" --wait
+  xcrun stapler staple "${APP_PATH}"
+  xcrun stapler validate "${APP_PATH}"
+  ditto -c -k --keepParent "${APP_PATH}" "${ZIP_PATH}"
+  spctl --assess --type execute --verbose=4 "${APP_PATH}"
+  echo "Notarized and stapled release app: ${APP_PATH}"
+else
+  echo "Notarization skipped. Set NOTARYTOOL_PROFILE to submit and staple."
+  if spctl --assess --type execute --verbose=4 "${APP_PATH}"; then
+    echo "Gatekeeper accepted the app."
+  else
+    echo "Gatekeeper did not accept the app yet. This is expected before notarization."
+  fi
+fi
