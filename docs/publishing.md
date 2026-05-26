@@ -8,7 +8,7 @@ These items must be real before public distribution:
 
 - Public support contact: replace the placeholder in `docs/support.md`.
 - Public source or release host: configure the `origin` remote.
-- Apple notarization: create the `timeannouncer-notary` keychain profile.
+- Apple notarization: use the `notarytool-profile` keychain profile.
 - GitHub CLI: install and authenticate `gh`.
 
 ## One-Time Setup
@@ -16,7 +16,7 @@ These items must be real before public distribution:
 Configure Apple notarization credentials:
 
 ```sh
-xcrun notarytool store-credentials timeannouncer-notary
+xcrun notarytool store-credentials notarytool-profile
 ```
 
 Install and authenticate the GitHub CLI:
@@ -38,7 +38,7 @@ git remote add origin <public-github-repository-url>
 Build, notarize, staple, and verify the release artifact:
 
 ```sh
-NOTARYTOOL_PROFILE=timeannouncer-notary ./scripts/build-release.sh
+NOTARYTOOL_PROFILE=notarytool-profile ./scripts/build-release.sh
 RUN_APP=1 ./scripts/smoke-release.sh
 ./scripts/launch-audit.sh
 ```

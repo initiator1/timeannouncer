@@ -12,7 +12,7 @@ DMG_PATH="${BUILD_ROOT}/TimeAnnouncer.dmg"
 DMG_SHA256_PATH="${DMG_PATH}.sha256"
 SUPPORT_DOC="${ROOT_DIR}/docs/support.md"
 RELEASE_NOTES="${ROOT_DIR}/docs/release-notes/v1.0-draft.md"
-NOTARYTOOL_PROFILE="${NOTARYTOOL_PROFILE:-timeannouncer-notary}"
+NOTARYTOOL_PROFILE="${NOTARYTOOL_PROFILE:-notarytool-profile}"
 
 failures=0
 warnings=0
@@ -147,6 +147,12 @@ if [[ -d "$APP_PATH" ]]; then
     print_pass "hardened runtime is enabled"
   else
     print_fail "hardened runtime is enabled" "$signature_details"
+  fi
+
+  if printf '%s\n' "$signature_details" | grep -Fq "Timestamp="; then
+    print_pass "release app has a secure timestamp"
+  else
+    print_fail "release app has a secure timestamp" "$signature_details"
   fi
 
   if codesign -d --entitlements :- "$APP_PATH" 2>/dev/null | grep -Fq "get-task-allow"; then
