@@ -73,6 +73,19 @@ check_contains_no_placeholder() {
   fi
 }
 
+check_optional_command() {
+  local label="$1"
+  local tool="$2"
+
+  if command -v "$tool" >/dev/null 2>&1; then
+    print_pass "$label"
+    return 0
+  fi
+
+  print_fail "$label" "$tool is required for the configured publishing path."
+  return 1
+}
+
 printf 'TimeAnnouncer Launch Audit\n'
 printf 'Repository: %s\n' "$ROOT_DIR"
 printf 'Notary profile: %s\n\n' "$NOTARYTOOL_PROFILE"
@@ -102,6 +115,11 @@ if git -C "$ROOT_DIR" remote get-url origin >/dev/null 2>&1; then
   print_pass "git origin remote is configured"
 else
   print_fail "git origin remote is configured" "No origin remote is configured for publishing a GitHub release."
+fi
+
+printf '\nPublishing Tooling\n'
+if check_optional_command "GitHub CLI is available" gh; then
+  check_command "GitHub CLI is authenticated" gh auth status
 fi
 
 printf '\nRelease Artifacts\n'
