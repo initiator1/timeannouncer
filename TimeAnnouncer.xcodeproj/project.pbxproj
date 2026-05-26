@@ -16,6 +16,7 @@
 		E91234560007 /* KokoroSynth.py in Resources */ = {isa = PBXBuildFile; fileRef = E91234550009 /* KokoroSynth.py */; };
 		E91234560008 /* TimeAnnouncementSchedule.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9123455000A /* TimeAnnouncementSchedule.swift */; };
 		E91234560009 /* TimeAnnouncementScheduleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9123455000B /* TimeAnnouncementScheduleTests.swift */; };
+		E9123456000A /* SettingsManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9123455000D /* SettingsManagerTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -41,6 +42,7 @@
 		E9123455000A /* TimeAnnouncementSchedule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeAnnouncementSchedule.swift; sourceTree = "<group>"; };
 		E9123455000B /* TimeAnnouncementScheduleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeAnnouncementScheduleTests.swift; sourceTree = "<group>"; };
 		E9123455000C /* TimeAnnouncerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TimeAnnouncerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		E9123455000D /* SettingsManagerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsManagerTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -99,6 +101,7 @@
 			isa = PBXGroup;
 			children = (
 				E9123455000B /* TimeAnnouncementScheduleTests.swift */,
+				E9123455000D /* SettingsManagerTests.swift */,
 			);
 			path = TimeAnnouncerTests;
 			sourceTree = "<group>";
@@ -217,6 +220,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				E91234560009 /* TimeAnnouncementScheduleTests.swift in Sources */,
+				E9123456000A /* SettingsManagerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

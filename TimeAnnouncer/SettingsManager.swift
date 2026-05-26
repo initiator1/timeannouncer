@@ -1,7 +1,7 @@
 import Foundation
 
 class SettingsManager {
-    private let defaults = UserDefaults.standard
+    private let defaults: UserDefaults
 
     private enum Keys {
         static let isEnabled = "isEnabled"
@@ -10,6 +10,17 @@ class SettingsManager {
         static let voiceProvider = "voiceProvider"
         static let timingMode = "timingMode"
         static let volume = "volume"
+        static let hasAppliedFirstLaunchDefaults = "hasAppliedFirstLaunchDefaults"
+        static let shouldShowFirstLaunchWelcome = "shouldShowFirstLaunchWelcome"
+
+        static let userPreferenceKeys = [
+            isEnabled,
+            intervalMinutes,
+            launchAtLogin,
+            voiceProvider,
+            timingMode,
+            volume
+        ]
     }
 
     enum VoiceProvider: String {
@@ -23,11 +34,47 @@ class SettingsManager {
         case fixedInterval = "fixedInterval"
     }
 
+    init(defaults: UserDefaults = .standard) {
+        self.defaults = defaults
+    }
+
+    @discardableResult
+    func applyFirstLaunchDefaultsIfNeeded() -> Bool {
+        guard defaults.object(forKey: Keys.hasAppliedFirstLaunchDefaults) == nil else {
+            return false
+        }
+
+        guard !hasExistingUserPreferences else {
+            defaults.set(true, forKey: Keys.hasAppliedFirstLaunchDefaults)
+            return false
+        }
+
+        defaults.set(false, forKey: Keys.isEnabled)
+        defaults.set(60, forKey: Keys.intervalMinutes)
+        defaults.set(false, forKey: Keys.launchAtLogin)
+        defaults.set(VoiceProvider.system.rawValue, forKey: Keys.voiceProvider)
+        defaults.set(TimingMode.clockAligned.rawValue, forKey: Keys.timingMode)
+        defaults.set(Float(0.25), forKey: Keys.volume)
+        defaults.set(true, forKey: Keys.hasAppliedFirstLaunchDefaults)
+        defaults.set(true, forKey: Keys.shouldShowFirstLaunchWelcome)
+
+        return true
+    }
+
+    var shouldShowFirstLaunchWelcome: Bool {
+        defaults.bool(forKey: Keys.shouldShowFirstLaunchWelcome)
+    }
+
+    func markFirstLaunchWelcomeShown() {
+        defaults.set(false, forKey: Keys.shouldShowFirstLaunchWelcome)
+    }
+
     var isEnabled: Bool {
         get {
-            // Default to true if not set
+            // Preserve the pre-launch behavior for already configured installs
+            // that have no explicit enabled flag yet.
             if defaults.object(forKey: Keys.isEnabled) == nil {
-                return true
+                return hasExistingUserPreferences
             }
             return defaults.bool(forKey: Keys.isEnabled)
         }
@@ -60,7 +107,7 @@ class SettingsManager {
         get {
             guard let rawValue = defaults.string(forKey: Keys.voiceProvider),
                   let provider = VoiceProvider(rawValue: rawValue) else {
-                return .kokoro
+                return hasExistingUserPreferences ? .kokoro : .system
             }
             return provider
         }
@@ -103,5 +150,9 @@ class SettingsManager {
 
     func setElevenLabsApiKey(_ key: String) throws {
         try KeychainHelper.save(key, forKey: "elevenlabs_api_key")
+    }
+
+    private var hasExistingUserPreferences: Bool {
+        Keys.userPreferenceKeys.contains { defaults.object(forKey: $0) != nil }
     }
 }

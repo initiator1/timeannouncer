@@ -22,6 +22,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Hide dock icon - we're a menu bar only app
         NSApp.setActivationPolicy(.accessory)
 
+        let shouldShowWelcome = settingsManager.applyFirstLaunchDefaultsIfNeeded()
+
         // Initialize the time announcer
         timeAnnouncer = TimeAnnouncer(settingsManager: settingsManager)
 
@@ -43,6 +45,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if settingsManager.isEnabled {
             timeAnnouncer?.start()
         }
+
+        if shouldShowWelcome || settingsManager.shouldShowFirstLaunchWelcome {
+            DispatchQueue.main.async { [weak self] in
+                self?.showFirstLaunchWelcome()
+            }
+        }
     }
 
     func setupMenu() {
@@ -57,6 +65,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let intervalItem = NSMenuItem(title: "Every \(settingsManager.intervalMinutes) min", action: nil, keyEquivalent: "")
         intervalItem.isEnabled = false
         menu.addItem(intervalItem)
+
+        let voiceStatusItem = NSMenuItem(title: voiceStatusTitle, action: nil, keyEquivalent: "")
+        voiceStatusItem.isEnabled = false
+        menu.addItem(voiceStatusItem)
 
         menu.addItem(NSMenuItem.separator())
 
@@ -73,6 +85,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let announceNowItem = NSMenuItem(title: "Announce Time Now", action: #selector(announceNow), keyEquivalent: "a")
         announceNowItem.target = self
         menu.addItem(announceNowItem)
+
+        let previewVoiceItem = NSMenuItem(title: "Preview Voice", action: #selector(previewVoice), keyEquivalent: "")
+        previewVoiceItem.target = self
+        menu.addItem(previewVoiceItem)
 
         menu.addItem(NSMenuItem.separator())
 
@@ -200,6 +216,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc func announceNow() {
         timeAnnouncer?.announceCurrentTime(force: true)
+    }
+
+    @objc func previewVoice() {
+        timeAnnouncer?.previewSelectedVoice()
     }
 
     @objc func setPresetInterval(_ sender: NSMenuItem) {
@@ -338,6 +358,32 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         alert.alertStyle = .warning
         alert.addButton(withTitle: "OK")
         alert.runModal()
+    }
+
+    private var voiceStatusTitle: String {
+        switch settingsManager.voiceProvider {
+        case .system:
+            return "Voice: System Voice"
+        case .kokoro:
+            return KokoroClient.isInstalled ? "Voice: Kokoro Ready" : "Voice: Kokoro Needs Install"
+        case .elevenlabs:
+            return settingsManager.hasElevenLabsApiKey ? "Voice: ElevenLabs Ready" : "Voice: ElevenLabs Needs API Key"
+        }
+    }
+
+    private func showFirstLaunchWelcome() {
+        settingsManager.markFirstLaunchWelcomeShown()
+
+        let alert = NSAlert()
+        alert.messageText = "Time Announcer is Ready"
+        alert.informativeText = "Time Announcer starts paused and uses the built-in macOS voice so setup is optional. Preview the voice now, or use the menu bar clock to resume announcements when you are ready."
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: "Preview Voice")
+        alert.addButton(withTitle: "Not Now")
+
+        if alert.runModal() == .alertFirstButtonReturn {
+            timeAnnouncer?.previewSelectedVoice()
+        }
     }
 
     @objc func toggleLaunchAtLogin() {
