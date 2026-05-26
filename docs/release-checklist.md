@@ -71,6 +71,12 @@ The script must prove:
 
 ## Launch Gate
 
+Run the current-state launch audit:
+
+```sh
+./scripts/launch-audit.sh
+```
+
 Before public distribution:
 
 - Install the stapled app from the release artifact, not from DerivedData.

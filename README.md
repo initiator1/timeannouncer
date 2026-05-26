@@ -42,6 +42,12 @@ Smoke-check the signed DMG, zip, and app:
 ./scripts/smoke-release.sh
 ```
 
+Audit the launch gates before publishing:
+
+```sh
+./scripts/launch-audit.sh
+```
+
 See [docs/release-checklist.md](docs/release-checklist.md) for notarization and launch gates.
 
 ## Public Materials
