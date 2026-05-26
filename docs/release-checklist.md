@@ -16,8 +16,31 @@ The script must prove:
 - Hardened runtime is enabled.
 - `get-task-allow` is absent from the release signature.
 - `KokoroSynth.py` is present in the app bundle.
+- The compiled asset catalog is present in the app bundle.
 - `codesign --verify --deep --strict` succeeds.
 - `build/release/TimeAnnouncer.zip` is produced for notarization.
+
+## Smoke Gate
+
+Run after a release build:
+
+```sh
+./scripts/smoke-release.sh
+```
+
+For a short first-run smoke using an isolated preferences suite:
+
+```sh
+RUN_APP=1 ./scripts/smoke-release.sh
+```
+
+The smoke script must prove:
+
+- The zip expands into `TimeAnnouncer.app`.
+- Both the built app and unzipped app have valid signatures.
+- The app bundle has the expected bundle identifier, version, menu-bar-only setting, Kokoro helper, and asset catalog.
+- Hardened runtime is enabled and `get-task-allow` is absent.
+- With `RUN_APP=1`, a fresh first run starts paused on System Voice at a 60-minute interval without touching the real user preferences.
 
 ## Notarization Gate
 
@@ -52,7 +75,7 @@ Before public distribution:
 
 ## Remaining Product Gates
 
-- App icon.
+- Notarytool credential profile.
+- Stapled release artifact.
 - Public download page or GitHub release.
-- Short privacy policy covering local speech, optional Kokoro, and optional ElevenLabs cloud speech.
-- Public support/contact path.
+- Public support/contact path replacing the placeholder in `docs/support.md`.

@@ -16,7 +16,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var statusItem: NSStatusItem?
     var popover: NSPopover?
     var timeAnnouncer: TimeAnnouncer?
-    var settingsManager = SettingsManager()
+    var settingsManager = AppDelegate.makeSettingsManager()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Hide dock icon - we're a menu bar only app
@@ -408,5 +408,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc func quitApp() {
         NSApplication.shared.terminate(nil)
+    }
+
+    private static func makeSettingsManager() -> SettingsManager {
+        guard let suiteName = ProcessInfo.processInfo.environment["TIMEANNOUNCER_DEFAULTS_SUITE"],
+              !suiteName.isEmpty,
+              let defaults = UserDefaults(suiteName: suiteName) else {
+            return SettingsManager()
+        }
+
+        return SettingsManager(defaults: defaults)
     }
 }

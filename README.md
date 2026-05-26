@@ -34,6 +34,12 @@ Direct-download release builds use Developer ID signing and hardened runtime:
 ./scripts/build-release.sh
 ```
 
+Smoke-check the signed zip and app:
+
+```sh
+./scripts/smoke-release.sh
+```
+
 See [docs/release-checklist.md](docs/release-checklist.md) for notarization and launch gates.
 
 ## Public Materials
