@@ -24,6 +24,12 @@ If ElevenLabs does not work:
 2. Confirm the Mac has internet access.
 3. Switch to **System Voice** if cloud speech is unavailable.
 
+## Support Diagnostics
+
+When asking for help, open the TimeAnnouncer menu and choose **Copy Support Diagnostics**. This copies app version, macOS version, announcement settings, voice readiness, Kokoro install status, and whether an ElevenLabs API key is saved.
+
+The diagnostics do not include the ElevenLabs API key itself.
+
 ## Launch Support Placeholder
 
 Before public release, replace this placeholder with the public support channel, such as a support email address or issue tracker.
