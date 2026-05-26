@@ -1,6 +1,10 @@
 # Support
 
-TimeAnnouncer is currently preparing for public launch.
+For TimeAnnouncer support, open an issue at:
+
+https://github.com/initiator1/timeannouncer/issues
+
+If you do not want to post publicly, include only general app behavior in the issue and leave out private machine details.
 
 ## Common Checks
 
@@ -29,7 +33,3 @@ If ElevenLabs does not work:
 When asking for help, open the TimeAnnouncer menu and choose **Copy Support Diagnostics**. This copies app version, macOS version, announcement settings, voice readiness, Kokoro install status, and whether an ElevenLabs API key is saved.
 
 The diagnostics do not include the ElevenLabs API key itself.
-
-## Launch Support Placeholder
-
-Before public release, replace this placeholder with the public support channel, such as a support email address or issue tracker.

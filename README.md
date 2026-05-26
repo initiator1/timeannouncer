@@ -56,4 +56,4 @@ See [docs/publishing.md](docs/publishing.md) for the GitHub release publishing p
 - [Privacy Policy](docs/privacy.md)
 - [Support](docs/support.md)
 - [Publishing](docs/publishing.md)
-- [Draft 1.0 Release Notes](docs/release-notes/v1.0-draft.md)
+- [1.0 Release Notes](docs/release-notes/v1.0.md)

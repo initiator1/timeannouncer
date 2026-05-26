@@ -6,8 +6,8 @@ This is the final direct-download release path after local build and smoke check
 
 These items must be real before public distribution:
 
-- Public support contact: replace the placeholder in `docs/support.md`.
-- Public source or release host: configure the `origin` remote.
+- Public support contact: `https://github.com/initiator1/timeannouncer/issues`.
+- Public source or release host: `https://github.com/initiator1/timeannouncer`.
 - Apple notarization: use the `notarytool-profile` keychain profile.
 - GitHub CLI: install and authenticate `gh`.
 
