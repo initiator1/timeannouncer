@@ -35,3 +35,8 @@ Direct-download release builds use Developer ID signing and hardened runtime:
 ```
 
 See [docs/release-checklist.md](docs/release-checklist.md) for notarization and launch gates.
+
+## Public Materials
+
+- [Privacy Policy](docs/privacy.md)
+- [Support](docs/support.md)
