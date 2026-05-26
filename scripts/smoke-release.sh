@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD_ROOT="${ROOT_DIR}/build/release"
 ZIP_PATH="${BUILD_ROOT}/TimeAnnouncer.zip"
+DMG_PATH="${BUILD_ROOT}/TimeAnnouncer.dmg"
 APP_PATH="${BUILD_ROOT}/DerivedData/Build/Products/Release/TimeAnnouncer.app"
 TEAM_ID="${TEAM_ID:-MDWFZC6396}"
 SIGNING_IDENTITY="${SIGNING_IDENTITY:-Developer ID Application: Douglas Baker (${TEAM_ID})}"
@@ -18,8 +19,17 @@ require_file() {
   test -e "$1" || fail "missing $1"
 }
 
+require_tool() {
+  command -v "$1" >/dev/null 2>&1 || fail "$1 is required"
+}
+
 require_file "${ZIP_PATH}"
+require_file "${DMG_PATH}"
 require_file "${APP_PATH}"
+require_tool codesign
+require_tool ditto
+require_tool hdiutil
+require_tool spctl
 
 TMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/timeannouncer-smoke.XXXXXX")"
 cleanup() {
@@ -30,6 +40,9 @@ cleanup() {
   if [[ -n "${SMOKE_DEFAULTS_SUITE:-}" ]]; then
     defaults delete "${SMOKE_DEFAULTS_SUITE}" >/dev/null 2>&1 || true
   fi
+  if [[ -n "${DMG_MOUNTED:-}" ]]; then
+    hdiutil detach "${MOUNT_DIR}" -quiet >/dev/null 2>&1 || true
+  fi
   rm -rf "${TMP_DIR}"
 }
 trap cleanup EXIT
@@ -38,7 +51,17 @@ ditto -x -k "${ZIP_PATH}" "${TMP_DIR}/unzipped"
 UNZIPPED_APP="${TMP_DIR}/unzipped/TimeAnnouncer.app"
 require_file "${UNZIPPED_APP}"
 
-for candidate in "${APP_PATH}" "${UNZIPPED_APP}"; do
+hdiutil verify "${DMG_PATH}"
+codesign --verify --verbose=2 "${DMG_PATH}"
+MOUNT_DIR="${TMP_DIR}/dmg"
+mkdir -p "${MOUNT_DIR}"
+hdiutil attach "${DMG_PATH}" -mountpoint "${MOUNT_DIR}" -nobrowse -readonly -quiet
+DMG_MOUNTED=1
+DMG_APP="${MOUNT_DIR}/TimeAnnouncer.app"
+require_file "${DMG_APP}"
+require_file "${MOUNT_DIR}/Applications"
+
+for candidate in "${APP_PATH}" "${UNZIPPED_APP}" "${DMG_APP}"; do
   require_file "${candidate}/Contents/MacOS/TimeAnnouncer"
   require_file "${candidate}/Contents/Resources/KokoroSynth.py"
   require_file "${candidate}/Contents/Resources/Assets.car"

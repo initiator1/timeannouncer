@@ -34,7 +34,9 @@ Direct-download release builds use Developer ID signing and hardened runtime:
 ./scripts/build-release.sh
 ```
 
-Smoke-check the signed zip and app:
+This creates `build/release/TimeAnnouncer.dmg` for public distribution and `build/release/TimeAnnouncer.zip` for app notarization.
+
+Smoke-check the signed DMG, zip, and app:
 
 ```sh
 ./scripts/smoke-release.sh
