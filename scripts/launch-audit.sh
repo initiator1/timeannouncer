@@ -2,6 +2,8 @@
 set -u
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+export PATH="/opt/homebrew/bin:/usr/local/bin:${PATH}"
+
 BUILD_ROOT="${ROOT_DIR}/build/release"
 APP_PATH="${BUILD_ROOT}/DerivedData/Build/Products/Release/TimeAnnouncer.app"
 ZIP_PATH="${BUILD_ROOT}/TimeAnnouncer.zip"

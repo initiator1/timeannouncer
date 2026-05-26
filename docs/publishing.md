@@ -25,6 +25,8 @@ Install and authenticate the GitHub CLI:
 gh auth login
 ```
 
+The release scripts include the standard Homebrew paths `/opt/homebrew/bin` and `/usr/local/bin`, so a Homebrew-installed `gh` works even when the current shell PATH is minimal.
+
 Configure a GitHub remote. For a public GitHub release, the remote repository must be reachable by public users:
 
 ```sh
