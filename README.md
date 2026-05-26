@@ -34,7 +34,7 @@ Direct-download release builds use Developer ID signing and hardened runtime:
 ./scripts/build-release.sh
 ```
 
-This creates `build/release/TimeAnnouncer.dmg` for public distribution and `build/release/TimeAnnouncer.zip` for app notarization.
+This creates `build/release/TimeAnnouncer.dmg` for public distribution, `build/release/TimeAnnouncer.zip` for app notarization, and SHA-256 checksum files for both artifacts.
 
 Smoke-check the signed DMG, zip, and app:
 
@@ -48,3 +48,4 @@ See [docs/release-checklist.md](docs/release-checklist.md) for notarization and 
 
 - [Privacy Policy](docs/privacy.md)
 - [Support](docs/support.md)
+- [Draft 1.0 Release Notes](docs/release-notes/v1.0-draft.md)

@@ -6,8 +6,10 @@ BUILD_ROOT="${ROOT_DIR}/build/release"
 DERIVED_DATA="${BUILD_ROOT}/DerivedData"
 APP_PATH="${DERIVED_DATA}/Build/Products/Release/TimeAnnouncer.app"
 ZIP_PATH="${BUILD_ROOT}/TimeAnnouncer.zip"
+ZIP_SHA256_PATH="${ZIP_PATH}.sha256"
 DMG_STAGING="${BUILD_ROOT}/dmg-staging"
 DMG_PATH="${BUILD_ROOT}/TimeAnnouncer.dmg"
+DMG_SHA256_PATH="${DMG_PATH}.sha256"
 
 TEAM_ID="${TEAM_ID:-MDWFZC6396}"
 SIGNING_IDENTITY="${SIGNING_IDENTITY:-Developer ID Application: Douglas Baker (${TEAM_ID})}"
@@ -26,6 +28,7 @@ require_tool xcodebuild
 require_tool codesign
 require_tool ditto
 require_tool hdiutil
+require_tool shasum
 require_tool spctl
 require_tool xcrun
 
@@ -50,6 +53,11 @@ create_dmg() {
   codesign --force --sign "${SIGNING_IDENTITY}" "${DMG_PATH}"
   codesign --verify --verbose=2 "${DMG_PATH}"
   hdiutil verify "${DMG_PATH}"
+}
+
+write_checksums() {
+  (cd "${BUILD_ROOT}" && shasum -a 256 "$(basename "${ZIP_PATH}")" > "$(basename "${ZIP_SHA256_PATH}")")
+  (cd "${BUILD_ROOT}" && shasum -a 256 "$(basename "${DMG_PATH}")" > "$(basename "${DMG_SHA256_PATH}")")
 }
 
 xcodebuild \
@@ -81,10 +89,12 @@ codesign --verify --deep --strict --verbose=2 "${APP_PATH}"
 
 ditto -c -k --keepParent "${APP_PATH}" "${ZIP_PATH}"
 create_dmg
+write_checksums
 
 echo "Built signed release app: ${APP_PATH}"
 echo "Created notarization zip: ${ZIP_PATH}"
 echo "Created signed installer disk image: ${DMG_PATH}"
+echo "Created release checksums: ${ZIP_SHA256_PATH}, ${DMG_SHA256_PATH}"
 
 if [[ -n "${NOTARYTOOL_PROFILE}" ]]; then
   xcrun notarytool submit "${ZIP_PATH}" --keychain-profile "${NOTARYTOOL_PROFILE}" --wait
@@ -95,9 +105,11 @@ if [[ -n "${NOTARYTOOL_PROFILE}" ]]; then
   xcrun notarytool submit "${DMG_PATH}" --keychain-profile "${NOTARYTOOL_PROFILE}" --wait
   xcrun stapler staple "${DMG_PATH}"
   xcrun stapler validate "${DMG_PATH}"
+  write_checksums
   spctl --assess --type execute --verbose=4 "${APP_PATH}"
   echo "Notarized and stapled release app: ${APP_PATH}"
   echo "Notarized and stapled installer disk image: ${DMG_PATH}"
+  echo "Updated release checksums: ${ZIP_SHA256_PATH}, ${DMG_SHA256_PATH}"
 else
   echo "Notarization skipped. Set NOTARYTOOL_PROFILE to submit and staple."
   if spctl --assess --type execute --verbose=4 "${APP_PATH}"; then
