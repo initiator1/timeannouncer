@@ -4,7 +4,9 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUILD_ROOT="${ROOT_DIR}/build/release"
 ZIP_PATH="${BUILD_ROOT}/TimeAnnouncer.zip"
+ZIP_SHA256_PATH="${ZIP_PATH}.sha256"
 DMG_PATH="${BUILD_ROOT}/TimeAnnouncer.dmg"
+DMG_SHA256_PATH="${DMG_PATH}.sha256"
 APP_PATH="${BUILD_ROOT}/DerivedData/Build/Products/Release/TimeAnnouncer.app"
 TEAM_ID="${TEAM_ID:-MDWFZC6396}"
 SIGNING_IDENTITY="${SIGNING_IDENTITY:-Developer ID Application: Douglas Baker (${TEAM_ID})}"
@@ -24,11 +26,14 @@ require_tool() {
 }
 
 require_file "${ZIP_PATH}"
+require_file "${ZIP_SHA256_PATH}"
 require_file "${DMG_PATH}"
+require_file "${DMG_SHA256_PATH}"
 require_file "${APP_PATH}"
 require_tool codesign
 require_tool ditto
 require_tool hdiutil
+require_tool shasum
 require_tool spctl
 
 TMP_DIR="$(mktemp -d "${TMPDIR:-/tmp}/timeannouncer-smoke.XXXXXX")"
@@ -46,6 +51,9 @@ cleanup() {
   rm -rf "${TMP_DIR}"
 }
 trap cleanup EXIT
+
+(cd "${BUILD_ROOT}" && shasum -a 256 -c "$(basename "${ZIP_SHA256_PATH}")")
+(cd "${BUILD_ROOT}" && shasum -a 256 -c "$(basename "${DMG_SHA256_PATH}")")
 
 ditto -x -k "${ZIP_PATH}" "${TMP_DIR}/unzipped"
 UNZIPPED_APP="${TMP_DIR}/unzipped/TimeAnnouncer.app"

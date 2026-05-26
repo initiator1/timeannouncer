@@ -20,6 +20,7 @@ The script must prove:
 - `codesign --verify --deep --strict` succeeds.
 - `build/release/TimeAnnouncer.zip` is produced for notarization.
 - `build/release/TimeAnnouncer.dmg` is produced for public distribution.
+- SHA-256 checksum files are produced for the zip and DMG.
 - The DMG contains `TimeAnnouncer.app` and an `Applications` shortcut.
 
 ## Smoke Gate
@@ -39,6 +40,7 @@ RUN_APP=1 ./scripts/smoke-release.sh
 The smoke script must prove:
 
 - The zip expands into `TimeAnnouncer.app`.
+- The zip and DMG match their SHA-256 checksum files.
 - The DMG verifies, mounts, and contains the expected install layout.
 - The built app, unzipped app, and DMG app have valid signatures.
 - The app bundle has the expected bundle identifier, version, menu-bar-only setting, Kokoro helper, and asset catalog.
