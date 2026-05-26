@@ -2,6 +2,8 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+export PATH="/opt/homebrew/bin:/usr/local/bin:${PATH}"
+
 BUILD_ROOT="${ROOT_DIR}/build/release"
 DMG_PATH="${BUILD_ROOT}/TimeAnnouncer.dmg"
 DMG_SHA256_PATH="${DMG_PATH}.sha256"
