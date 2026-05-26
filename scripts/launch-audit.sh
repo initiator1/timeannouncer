@@ -11,7 +11,7 @@ ZIP_SHA256_PATH="${ZIP_PATH}.sha256"
 DMG_PATH="${BUILD_ROOT}/TimeAnnouncer.dmg"
 DMG_SHA256_PATH="${DMG_PATH}.sha256"
 SUPPORT_DOC="${ROOT_DIR}/docs/support.md"
-RELEASE_NOTES="${ROOT_DIR}/docs/release-notes/v1.0-draft.md"
+RELEASE_NOTES="${ROOT_DIR}/docs/release-notes/v1.0.md"
 NOTARYTOOL_PROFILE="${NOTARYTOOL_PROFILE:-notarytool-profile}"
 
 failures=0

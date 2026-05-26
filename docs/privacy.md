@@ -33,4 +33,4 @@ You can remove these folders to delete Kokoro local data.
 
 ## Contact
 
-For support or privacy questions, use the support path listed in `docs/support.md` until a public support address is published.
+For support or privacy questions, use the support path listed in `docs/support.md`.
