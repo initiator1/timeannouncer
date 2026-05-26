@@ -49,9 +49,11 @@ Audit the launch gates before publishing:
 ```
 
 See [docs/release-checklist.md](docs/release-checklist.md) for notarization and launch gates.
+See [docs/publishing.md](docs/publishing.md) for the GitHub release publishing path.
 
 ## Public Materials
 
 - [Privacy Policy](docs/privacy.md)
 - [Support](docs/support.md)
+- [Publishing](docs/publishing.md)
 - [Draft 1.0 Release Notes](docs/release-notes/v1.0-draft.md)
