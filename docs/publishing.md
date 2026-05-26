@@ -9,6 +9,7 @@ These items must be real before public distribution:
 - Public support contact: replace the placeholder in `docs/support.md`.
 - Public source or release host: configure the `origin` remote.
 - Apple notarization: create the `timeannouncer-notary` keychain profile.
+- GitHub CLI: install and authenticate `gh`.
 
 ## One-Time Setup
 
@@ -16,6 +17,12 @@ Configure Apple notarization credentials:
 
 ```sh
 xcrun notarytool store-credentials timeannouncer-notary
+```
+
+Install and authenticate the GitHub CLI:
+
+```sh
+gh auth login
 ```
 
 Configure a GitHub remote. For a public GitHub release, the remote repository must be reachable by public users:
