@@ -143,7 +143,15 @@ class TimeAnnouncer {
 
     func announceCurrentTime(force: Bool = false) {
         let timeString = formatTimeForSpeech()
-        if force, currentAnnouncementTask != nil, pendingAnnouncementText == timeString {
+        announce(timeString, force: force)
+    }
+
+    func previewSelectedVoice() {
+        announce("It's ten thirty", force: true)
+    }
+
+    private func announce(_ text: String, force: Bool = false) {
+        if force, currentAnnouncementTask != nil, pendingAnnouncementText == text {
             return
         }
 
@@ -152,11 +160,11 @@ class TimeAnnouncer {
 
         switch settingsManager.voiceProvider {
         case .elevenlabs:
-            announceWithElevenLabs(timeString)
+            announceWithElevenLabs(text)
         case .kokoro:
-            announceWithKokoro(timeString)
+            announceWithKokoro(text)
         case .system:
-            announceWithSystemVoice(timeString)
+            announceWithSystemVoice(text)
         }
     }
 
