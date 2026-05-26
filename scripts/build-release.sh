@@ -70,6 +70,7 @@ xcodebuild \
   CODE_SIGN_IDENTITY="${SIGNING_IDENTITY}" \
   ENABLE_HARDENED_RUNTIME=YES \
   CODE_SIGN_INJECT_BASE_ENTITLEMENTS=NO \
+  OTHER_CODE_SIGN_FLAGS="--timestamp" \
   build
 
 test -d "${APP_PATH}" || fail "Release app was not built at ${APP_PATH}"
@@ -80,6 +81,7 @@ SIGNATURE_DETAILS="$(codesign -dv --verbose=4 "${APP_PATH}" 2>&1)"
 echo "${SIGNATURE_DETAILS}" | grep -Fq "Authority=${SIGNING_IDENTITY}" || fail "app is not signed with ${SIGNING_IDENTITY}"
 echo "${SIGNATURE_DETAILS}" | grep -Fq "TeamIdentifier=${TEAM_ID}" || fail "app is not signed with team ${TEAM_ID}"
 echo "${SIGNATURE_DETAILS}" | grep -Fq "flags=0x10000(runtime)" || fail "hardened runtime is not enabled"
+echo "${SIGNATURE_DETAILS}" | grep -Fq "Timestamp=" || fail "release signature does not include a secure timestamp"
 
 if codesign -d --entitlements :- "${APP_PATH}" 2>/dev/null | grep -Fq "get-task-allow"; then
   fail "release signature contains get-task-allow"

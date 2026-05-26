@@ -13,6 +13,7 @@ Run:
 The script must prove:
 
 - Developer ID Application signing succeeds.
+- The release signature includes a secure timestamp.
 - Hardened runtime is enabled.
 - `get-task-allow` is absent from the release signature.
 - `KokoroSynth.py` is present in the app bundle.
@@ -52,13 +53,13 @@ The smoke script must prove:
 Configure a notarytool keychain profile once:
 
 ```sh
-xcrun notarytool store-credentials timeannouncer-notary
+xcrun notarytool store-credentials notarytool-profile
 ```
 
 Then run:
 
 ```sh
-NOTARYTOOL_PROFILE=timeannouncer-notary ./scripts/build-release.sh
+NOTARYTOOL_PROFILE=notarytool-profile ./scripts/build-release.sh
 ```
 
 The script must prove:
