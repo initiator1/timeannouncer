@@ -194,6 +194,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         launchItem.state = settingsManager.launchAtLogin ? .on : .off
         menu.addItem(launchItem)
 
+        let diagnosticsItem = NSMenuItem(title: "Copy Support Diagnostics", action: #selector(copySupportDiagnostics), keyEquivalent: "")
+        diagnosticsItem.target = self
+        menu.addItem(diagnosticsItem)
+
         menu.addItem(NSMenuItem.separator())
 
         // Quit
@@ -404,6 +408,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         setupMenu()
+    }
+
+    @objc func copySupportDiagnostics() {
+        let diagnostics = SupportDiagnostics.make(settingsManager: settingsManager)
+        let pasteboard = NSPasteboard.general
+        pasteboard.clearContents()
+        pasteboard.setString(diagnostics, forType: .string)
+
+        showAlert(title: "Diagnostics Copied", message: "Support diagnostics were copied to the clipboard. They include app settings and voice readiness, but not API keys.")
     }
 
     @objc func quitApp() {

@@ -78,6 +78,7 @@ Before public distribution:
 - Verify a fresh profile starts paused on System Voice.
 - Verify an existing profile with Kokoro preferences keeps Kokoro selected.
 - Verify `Preview Voice`, `Announce Time Now`, pause/resume, interval changes, volume changes, and launch-at-login behavior.
+- Verify **Copy Support Diagnostics** copies useful support state without API keys.
 - Replace any stale `/Applications/TimeAnnouncer.app` proof with the current signed/stapled artifact.
 
 ## Remaining Product Gates
