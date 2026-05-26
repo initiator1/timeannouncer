@@ -47,6 +47,7 @@ xcodebuild \
 
 test -d "${APP_PATH}" || fail "Release app was not built at ${APP_PATH}"
 test -f "${APP_PATH}/Contents/Resources/KokoroSynth.py" || fail "KokoroSynth.py is missing from the app bundle"
+test -f "${APP_PATH}/Contents/Resources/Assets.car" || fail "compiled asset catalog is missing from the app bundle"
 
 SIGNATURE_DETAILS="$(codesign -dv --verbose=4 "${APP_PATH}" 2>&1)"
 echo "${SIGNATURE_DETAILS}" | grep -Fq "Authority=${SIGNING_IDENTITY}" || fail "app is not signed with ${SIGNING_IDENTITY}"
