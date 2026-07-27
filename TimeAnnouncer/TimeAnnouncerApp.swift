@@ -198,6 +198,15 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         diagnosticsItem.target = self
         menu.addItem(diagnosticsItem)
 
+        // Without ANY update path, every 1.0.0 user is frozen on 1.0.0 forever
+        // — including the ones who downloaded a build where the Kokoro voice
+        // could not work. This is the cheapest honest fix: it opens the
+        // releases page rather than pretending to auto-update. A real Sparkle
+        // feed is the v1.1 answer; shipping nothing is not.
+        let updatesItem = NSMenuItem(title: "Check for Updates…", action: #selector(checkForUpdates), keyEquivalent: "")
+        updatesItem.target = self
+        menu.addItem(updatesItem)
+
         menu.addItem(NSMenuItem.separator())
 
         // Quit
@@ -315,6 +324,23 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if settingsManager.hasElevenLabsApiKey {
             settingsManager.voiceProvider = .elevenlabs
             setupMenu()
+        }
+    }
+
+    @objc func checkForUpdates() {
+        // Shows the installed version so a user can tell at a glance whether
+        // the releases page has anything newer, then opens that page.
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
+        let alert = NSAlert()
+        alert.messageText = "Time Announcer \(version)"
+        alert.informativeText = "Open the releases page to see whether a newer version is available."
+        alert.alertStyle = .informational
+        alert.addButton(withTitle: "Open Releases")
+        alert.addButton(withTitle: "Cancel")
+
+        if alert.runModal() == .alertFirstButtonReturn,
+           let url = URL(string: "https://github.com/initiator1/timeannouncer/releases/latest") {
+            NSWorkspace.shared.open(url)
         }
     }
 
