@@ -77,6 +77,8 @@ xcodebuild \
   ENABLE_HARDENED_RUNTIME=YES \
   CODE_SIGN_INJECT_BASE_ENTITLEMENTS=NO \
   OTHER_CODE_SIGN_FLAGS="--timestamp" \
+  ONLY_ACTIVE_ARCH=NO \
+  ARCHS="arm64 x86_64" \
   build
 
 test -d "${APP_PATH}" || fail "Release app was not built at ${APP_PATH}"
