@@ -1,14 +1,16 @@
 # Privacy Policy
 
-Last updated: May 26, 2026
+Last updated: July 26, 2026
 
 TimeAnnouncer is a macOS menu bar app that announces the current time aloud.
 
 ## Data Collection
 
-TimeAnnouncer does not collect, sell, or share personal data.
+Time Announcer has no analytics, no telemetry, and no servers of its own. Nothing about you is collected, sold, or shared with anyone by this app or its developer.
 
 The app stores preferences locally on your Mac, including whether announcements are enabled, the selected interval, timing mode, volume, voice provider, and launch-at-login preference.
+
+The one exception is entirely your choice: if you enable the optional ElevenLabs voice, the phrase being spoken is sent to ElevenLabs using your own API key. See Speech Providers below. The two other voices never leave your Mac.
 
 ## Speech Providers
 
@@ -33,4 +35,6 @@ You can remove these folders to delete Kokoro local data.
 
 ## Contact
 
-For support or privacy questions, use the support path listed in `docs/support.md`.
+For support or privacy questions, email **support@initiatorworks.com**.
+
+Time Announcer is published by INITIATOR LLC.
