@@ -12,7 +12,13 @@ DMG_PATH="${BUILD_ROOT}/TimeAnnouncer.dmg"
 DMG_SHA256_PATH="${DMG_PATH}.sha256"
 
 TEAM_ID="${TEAM_ID:-MDWFZC6396}"
-SIGNING_IDENTITY="${SIGNING_IDENTITY:-Developer ID Application: Douglas Baker (${TEAM_ID})}"
+# Sign as INITIATOR LLC, not the personal name (2026-07-26). This string is what
+# macOS shows users in Gatekeeper when they open the app, and 1.0.0 shipped
+# showing Douglas's full personal name — which he does not want public. The Apple
+# account converted to an organization, but Apple never renames existing
+# certificates, so a new Developer ID was issued under the org. This default must
+# point at it or every build silently reverts to the old identity.
+SIGNING_IDENTITY="${SIGNING_IDENTITY:-Developer ID Application: INITIATOR LLC (${TEAM_ID})}"
 NOTARYTOOL_PROFILE="${NOTARYTOOL_PROFILE:-}"
 
 fail() {
