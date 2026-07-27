@@ -9,6 +9,8 @@ No window, no dock icon, no account, no analytics.
 
 macOS 13 or later · Apple silicon and Intel · Signed and notarized · Free
 
+![Time Announcer opening its menu bar dropdown and speaking the time: "It's ten thirty"](docs/media/timeannouncer-demo.gif)
+
 ---
 
 ## Why
