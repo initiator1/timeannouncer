@@ -1,5 +1,13 @@
 # Release Checklist
 
+> **SHIPPED 2026-05-26.** v1.0.0 is public on GitHub — signed, notarized,
+> stapled, with real downloads. Anything below marked "Remaining" refers to the
+> ORIGINAL pre-release state and is stale. This staleness had a real cost: for
+> two months Douglas believed he had never shipped anything, because this file
+> still said notarization was outstanding. **If you change release state, update
+> this file in the same commit.**
+
+
 This checklist tracks the direct-download macOS launch path for TimeAnnouncer.
 
 ## Build Gate
