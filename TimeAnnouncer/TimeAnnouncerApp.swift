@@ -319,14 +319,30 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc func showKokoroSetupDialog() {
+        // 2026-07-26: this dialog previously told users to run
+        // "./scripts/setup-kokoro.sh from the project directory". The shipped
+        // DMG has no scripts/ directory and a downloader has no project — so
+        // for every real user, two of the three advertised voices were a dead
+        // end. The command now points at the script bundled in the app, the
+        // real costs (Homebrew, ~2 GB, several minutes) are stated up front
+        // rather than discovered halfway through, and the command is one click
+        // from the clipboard because nobody retypes a path by hand.
+        let command = KokoroClient.installCommand
         let alert = NSAlert()
         alert.messageText = KokoroClient.isInstalled ? "Kokoro is installed" : "Install Kokoro"
         alert.informativeText = KokoroClient.isInstalled
-            ? "Kokoro is available locally. To rebuild the environment, run \(KokoroClient.installCommand) from the project directory."
-            : "Kokoro needs a local Python environment before it can speak. Run \(KokoroClient.installCommand) from the project directory, then choose Kokoro again."
+            ? "Kokoro is ready. To rebuild the environment, paste this into Terminal:\n\n\(command)"
+            : "Kokoro is an optional higher-quality voice that runs entirely on your Mac. "
+              + "Setup needs Homebrew, downloads about 2 GB, and takes a few minutes.\n\n"
+              + "Paste this into Terminal, then choose Kokoro again:\n\n\(command)"
         alert.alertStyle = .informational
+        alert.addButton(withTitle: "Copy Command")
         alert.addButton(withTitle: "OK")
-        alert.runModal()
+
+        if alert.runModal() == .alertFirstButtonReturn {
+            NSPasteboard.general.clearContents()
+            NSPasteboard.general.setString(command, forType: .string)
+        }
     }
 
     @objc func showApiKeyDialog() {

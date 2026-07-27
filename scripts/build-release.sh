@@ -75,6 +75,9 @@ xcodebuild \
 
 test -d "${APP_PATH}" || fail "Release app was not built at ${APP_PATH}"
 test -f "${APP_PATH}/Contents/Resources/KokoroSynth.py" || fail "KokoroSynth.py is missing from the app bundle"
+# The setup script MUST ship too. Shipping KokoroSynth.py without it is what
+# made the Kokoro voice unreachable for every 1.0.0 downloader (2026-07-26).
+test -f "${APP_PATH}/Contents/Resources/setup-kokoro.sh" || fail "setup-kokoro.sh is missing from the app bundle — Kokoro would be a dead end for anyone installing from the DMG"
 test -f "${APP_PATH}/Contents/Resources/Assets.car" || fail "compiled asset catalog is missing from the app bundle"
 
 SIGNATURE_DETAILS="$(codesign -dv --verbose=4 "${APP_PATH}" 2>&1)"
