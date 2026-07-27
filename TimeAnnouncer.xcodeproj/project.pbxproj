@@ -14,6 +14,7 @@
 		E91234560005 /* ElevenLabsClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = E91234550007 /* ElevenLabsClient.swift */; };
 		E91234560006 /* KokoroClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = E91234550008 /* KokoroClient.swift */; };
 		E91234560007 /* KokoroSynth.py in Resources */ = {isa = PBXBuildFile; fileRef = E91234550009 /* KokoroSynth.py */; };
+		E9123456AA01 /* setup-kokoro.sh in Resources */ = {isa = PBXBuildFile; fileRef = E9123455AA01 /* setup-kokoro.sh */; };
 		E91234560008 /* TimeAnnouncementSchedule.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9123455000A /* TimeAnnouncementSchedule.swift */; };
 		E91234560009 /* TimeAnnouncementScheduleTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9123455000B /* TimeAnnouncementScheduleTests.swift */; };
 		E9123456000A /* SettingsManagerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9123455000D /* SettingsManagerTests.swift */; };
@@ -42,6 +43,7 @@
 		E91234550007 /* ElevenLabsClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ElevenLabsClient.swift; sourceTree = "<group>"; };
 		E91234550008 /* KokoroClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KokoroClient.swift; sourceTree = "<group>"; };
 		E91234550009 /* KokoroSynth.py */ = {isa = PBXFileReference; lastKnownFileType = text.script.python; path = KokoroSynth.py; sourceTree = "<group>"; };
+		E9123455AA01 /* setup-kokoro.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; name = "setup-kokoro.sh"; path = "../scripts/setup-kokoro.sh"; sourceTree = "<group>"; };
 		E9123455000A /* TimeAnnouncementSchedule.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeAnnouncementSchedule.swift; sourceTree = "<group>"; };
 		E9123455000B /* TimeAnnouncementScheduleTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimeAnnouncementScheduleTests.swift; sourceTree = "<group>"; };
 		E9123455000C /* TimeAnnouncerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = TimeAnnouncerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -88,6 +90,7 @@
 				E91234550007 /* ElevenLabsClient.swift */,
 				E91234550008 /* KokoroClient.swift */,
 				E91234550009 /* KokoroSynth.py */,
+				E9123455AA01 /* setup-kokoro.sh */,
 				E9123455000A /* TimeAnnouncementSchedule.swift */,
 				E9123455000F /* SupportDiagnostics.swift */,
 				E9123455000E /* Assets.xcassets */,
@@ -197,6 +200,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				E91234560007 /* KokoroSynth.py in Resources */,
+				E9123456AA01 /* setup-kokoro.sh in Resources */,
 				E9123456000B /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

@@ -42,8 +42,18 @@ struct KokoroClient {
             .appendingPathComponent("bin/python")
     }
 
+    /// Path to the bundled setup script, quoted so it survives the space in
+    /// "Application Support" and in any app path containing spaces.
+    ///
+    /// Was hardcoded to "./scripts/setup-kokoro.sh" until 2026-07-26 — a
+    /// repo-relative path that does not exist for anyone who installed from the
+    /// DMG, which is everyone. The dialog told real users to run a script from
+    /// a "project directory" they had never had.
     static var installCommand: String {
-        "./scripts/setup-kokoro.sh"
+        if let bundled = Bundle.main.url(forResource: "setup-kokoro", withExtension: "sh") {
+            return "bash \"\(bundled.path)\""
+        }
+        return "./scripts/setup-kokoro.sh"   // running from the checkout
     }
 
     static var isInstalled: Bool {
