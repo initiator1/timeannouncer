@@ -1,10 +1,12 @@
 # Support
 
-For TimeAnnouncer support, open an issue at:
+**Email:** support@initiatorworks.com
 
-https://github.com/initiator1/timeannouncer/issues
+Or open an issue at https://github.com/initiator1/timeannouncer/issues
 
-If you do not want to post publicly, include only general app behavior in the issue and leave out private machine details.
+Email needs no account and is the better route if you use a screen reader, do
+not use GitHub, or would rather not post publicly. Issues are public, so leave
+private machine details out of them.
 
 ## Common Checks
 
@@ -14,7 +16,7 @@ If no audio plays:
 2. Choose **Preview Voice**.
 3. Confirm the selected voice is ready in the menu.
 4. Raise the volume from the **Volume** submenu.
-5. If Kokoro is selected, run `./scripts/setup-kokoro.sh` or switch to **System Voice**.
+5. If Kokoro is selected, choose **Kokoro** from the Voice menu to see its setup command (there is a **Copy Command** button), or switch to **System Voice**.
 
 If announcements do not repeat:
 
