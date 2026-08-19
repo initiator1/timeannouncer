@@ -18,6 +18,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var timeAnnouncer: TimeAnnouncer?
     var settingsManager = AppDelegate.makeSettingsManager()
 
+    static let supportPageURL = "https://ko-fi.com/initiatorworks"
+
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Hide dock icon - we're a menu bar only app
         NSApp.setActivationPolicy(.accessory)
@@ -207,6 +209,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         updatesItem.target = self
         menu.addItem(updatesItem)
 
+        let supportItem = NSMenuItem(title: "Buy Me a Coffee…", action: #selector(openSupportPage), keyEquivalent: "")
+        supportItem.target = self
+        menu.addItem(supportItem)
+
         menu.addItem(NSMenuItem.separator())
 
         // Quit
@@ -325,6 +331,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             settingsManager.voiceProvider = .elevenlabs
             setupMenu()
         }
+    }
+
+    @objc func openSupportPage() {
+        // The app is free and MIT-licensed. This is the only place that asks
+        // for anything, and one Ko-fi page collects for all of these tools.
+        guard let url = URL(string: AppDelegate.supportPageURL) else { return }
+        NSWorkspace.shared.open(url)
     }
 
     @objc func checkForUpdates() {

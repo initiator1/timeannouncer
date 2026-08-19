@@ -57,6 +57,7 @@ Small native project, with app sources in `TimeAnnouncer/` and tests in `TimeAnn
 - **Clock-aligned custom intervals** must divide evenly into an hour. Fixed interval mode accepts arbitrary positive minute values.
 - **UserDefaults defaults**: `isEnabled` defaults to `true` (not standard UserDefaults false), `intervalMinutes` defaults to `60`, `voiceProvider` defaults to `kokoro`, `timingMode` defaults to `clockAligned`, `volume` defaults to `0.1`.
 - **Menu rebuilds entirely** on every state change via `setupMenu()` — no incremental updates.
+- **Support link is hardcoded**: `AppDelegate.supportPageURL` = `https://ko-fi.com/initiatorworks`, opened by the **Buy Me a Coffee…** menu item. One Ko-fi page serves several apps. A sibling app once shipped a wrong slug as a dead link — verify the page loads before changing this.
 - **Time speech format**: Hours are words ("three"), minutes use "oh" prefix for single digits ("three oh five"). AM/PM only spoken on the hour.
 
 ## Requirements

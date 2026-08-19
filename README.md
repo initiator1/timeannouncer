@@ -74,6 +74,12 @@ Reporting a problem? Open the menu and choose **Copy Support Diagnostics**. It
 copies your app version, macOS version and settings, and never includes your
 ElevenLabs API key.
 
+## Like the app?
+
+Time Announcer is free and MIT-licensed, and it stays that way. If it saves you
+looking at a clock, you can [buy me a coffee](https://ko-fi.com/initiatorworks).
+The same link is in the app menu.
+
 ---
 
 ## Building from source
