@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+- **Buy Me a Coffee…** menu item added. It opens
+  https://ko-fi.com/initiatorworks. The app stays free and MIT-licensed.
+
 ## 1.0.1 — 2026-07-26
 
 Fixes a real problem in 1.0.0: the Kokoro voice could not be set up by anyone
