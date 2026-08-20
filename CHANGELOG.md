@@ -3,7 +3,8 @@
 ## Unreleased
 
 - **Buy Me a Coffee…** menu item added. It opens
-  https://ko-fi.com/initiatorworks. The app stays free and MIT-licensed.
+  https://ko-fi.com/initiatorworks?app=timeannouncer. The app stays free and
+  MIT-licensed.
 
 ## 1.0.1 — 2026-07-26
 
