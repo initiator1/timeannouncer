@@ -64,27 +64,41 @@ Settings → General → Features → tick **Sponsorships**. Four repos, four ti
 Until then the funding files are inert. Do not report the Sponsor button as
 shipped.
 
-### Do not use GraphQL `fundingLinks` as evidence
+### GraphQL `fundingLinks` lags on a newly created file
 
-It looks like a clean way to check the file and it is not. Measured across all
-four repos at 10:58 UTC on 2026-08-20:
+It looks like a clean way to check the file. It is not, and the reason is
+specific rather than random. Measured across all four repos at 11:01 UTC on
+2026-08-20:
 
-| Repo | Pushed | `fundingLinks` |
-|---|---|---|
-| `unstray` | 5 min before | populated |
-| `portmanager` | 4 min before | empty |
-| `redbuttonquit` | 3 h before | populated |
-| `timeannouncer` | 3 h before | empty |
+| Repo | FUNDING.yml first added | Last modified | `fundingLinks` |
+|---|---|---|---|
+| `unstray` | 2026-07-28 | today 10:53 | populated |
+| `redbuttonquit` | 2026-08-12 | today 07:26 | populated |
+| `timeannouncer` | today 07:30 | today 07:30 | empty |
+| `portmanager` | today 10:54 | today 10:54 | empty |
 
-Age does not explain it — a five-minute-old push registered while a three-hour-
-old one did not. File content does not explain it either: `timeannouncer`,
-`portmanager`, and `redbuttonquit` carry a byte-identical `custom: ["URL"]`
-line with LF endings, and one of the three registers.
+Both files that predate today register. Both files created today do not. Four
+for four.
 
-Worse, the field does not predict what a visitor sees. `redbuttonquit` has a
-populated `fundingLinks` and still shows no button.
+So the field tracks whether GitHub has indexed the file, not whether the file is
+correct. An edit to an already-indexed file appears within minutes — `unstray`
+registered its new tagged URL five minutes after the change. A first-time
+creation had not appeared after three and a half hours.
 
-So the field answers no question worth asking. Check the rendered page instead.
+Two rules follow:
+
+1. **Never use it to check a newly added funding file.** It reports empty for a
+   correct file, which reads as a defect that is not there.
+2. **It never tells you what a visitor sees.** `redbuttonquit` has a populated
+   `fundingLinks` and shows no Sponsor button. Registered and visible are
+   independent. Check the rendered page.
+
+**Open, costs nothing:** re-query `timeannouncer` and `portmanager` tomorrow.
+Both files were created on 2026-08-20 and were still unindexed hours later. The
+answer puts a real number on the first-index lag, and both repos will produce it
+without any work.
+
+    gh api graphql -f query='{ repository(owner:"initiator1", name:"timeannouncer") { fundingLinks { platform url } } }'
 
 ## Ko-fi tracking gives no data yet — 2026-08-20 — owner: BOSS
 
