@@ -43,36 +43,48 @@ dead link in RedButtonQuit 1.0.0. The correct slug is `initiatorworks`.
 
 ## GitHub Sponsor button does not render — 2026-08-20 — owner: BOSS
 
-`.github/FUNDING.yml` is correct in this repo and in the sibling repos, and the
-Sponsor button still does not appear to visitors.
+`.github/FUNDING.yml` is correct in all four app repos and no Sponsor button
+appears on any of them.
 
-Verified on 2026-08-20 against a logged-out browser:
+Verified logged-out on 2026-08-20:
 
-- `redbuttonquit` and `unstray` have valid funding files. GitHub's GraphQL API
-  reports the parsed link for both (`fundingLinks` returns the Ko-fi URL).
-- Neither repo page shows a Sponsor button or a "Sponsor this project" panel.
-  The word "Sponsor" does not appear on either page.
-- A control repo that does show the button (`sindresorhus/awesome`) renders
-  "Sponsor this project" plus its funding URLs in the sidebar, so the check
-  method is sound.
+- No Sponsor button and no "Sponsor this project" panel on `timeannouncer` or
+  `redbuttonquit`. The word "Sponsor" appears nowhere on either page.
+- A control repo that does show the button, `sindresorhus/awesome`, renders
+  "Sponsor this project" with its funding URLs in the sidebar under the same
+  check. The method is sound.
 
-**Cause:** the per-repo Sponsorships feature is switched off. GitHub registers
-the funding file either way and shows nothing. This is the same silent failure
-as the dead `github:` key — the repo asks for nothing and no error appears.
+**Cause:** the per-repo Sponsorships feature is switched off. GitHub accepts the
+file and shows nothing, which is the same silent failure as a dead `github:`
+key, one layer up.
 
-**Fix, and only BOSS can do it.** It is a web-only setting with no API. For each
-repo: Settings → General → Features → tick **Sponsorships**. Four repos,
-four ticks.
+**Fix, and only BOSS can do it.** Web-only setting, no API. For each repo:
+Settings → General → Features → tick **Sponsorships**. Four repos, four ticks.
 
-Until that is ticked, the funding files are inert. Do not report the Sponsor
-button as shipped.
+Until then the funding files are inert. Do not report the Sponsor button as
+shipped.
 
-**Also pending:** GitHub had not yet parsed this repo's funding file when last
-checked, minutes after the push, while the sibling repos' files were parsed.
-The file matches the working form byte for byte in structure, so this is
-expected propagation lag. Re-check with:
+### Do not use GraphQL `fundingLinks` as evidence
 
-    gh api graphql -f query='{ repository(owner:"initiator1", name:"timeannouncer") { fundingLinks { platform url } } }'
+It looks like a clean way to check the file and it is not. Measured across all
+four repos at 10:58 UTC on 2026-08-20:
+
+| Repo | Pushed | `fundingLinks` |
+|---|---|---|
+| `unstray` | 5 min before | populated |
+| `portmanager` | 4 min before | empty |
+| `redbuttonquit` | 3 h before | populated |
+| `timeannouncer` | 3 h before | empty |
+
+Age does not explain it — a five-minute-old push registered while a three-hour-
+old one did not. File content does not explain it either: `timeannouncer`,
+`portmanager`, and `redbuttonquit` carry a byte-identical `custom: ["URL"]`
+line with LF endings, and one of the three registers.
+
+Worse, the field does not predict what a visitor sees. `redbuttonquit` has a
+populated `fundingLinks` and still shows no button.
+
+So the field answers no question worth asking. Check the rendered page instead.
 
 ## Ko-fi tracking gives no data yet — 2026-08-20 — owner: BOSS
 
