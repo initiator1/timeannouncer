@@ -93,6 +93,18 @@ Two rules follow:
    `fundingLinks` and shows no Sponsor button. Registered and visible are
    independent. Check the rendered page.
 
+**Trap that produced a wrong answer once.** To find when a file was first
+added, do not take the first element of the commits API response. It returns
+newest first and defaults to 30 per page, so `.[0]` gives the LATEST commit and
+a small page size silently truncates the history. Sort the dates and take the
+earliest:
+
+    gh api "repos/initiator1/<repo>/commits?path=.github/FUNDING.yml&per_page=100" \
+      --jq '[.[].commit.committer.date] | sort | .[0]'
+
+Reading that field as "first added" is what made a first-time file creation look
+like a three-hour-old push, which made a consistent result look random.
+
 **Open, costs nothing:** re-query `timeannouncer` and `portmanager` tomorrow.
 Both files were created on 2026-08-20 and were still unindexed hours later. The
 answer puts a real number on the first-index lag, and both repos will produce it
