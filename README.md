@@ -77,7 +77,7 @@ ElevenLabs API key.
 ## Like the app?
 
 Time Announcer is free and MIT-licensed, and it stays that way. If it saves you
-looking at a clock, you can [buy me a coffee](https://ko-fi.com/initiatorworks).
+looking at a clock, you can [buy me a coffee](https://ko-fi.com/initiatorworks?app=timeannouncer).
 The same link is in the app menu.
 
 ---

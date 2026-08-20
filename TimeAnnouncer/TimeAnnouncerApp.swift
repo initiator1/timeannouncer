@@ -18,7 +18,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     var timeAnnouncer: TimeAnnouncer?
     var settingsManager = AppDelegate.makeSettingsManager()
 
-    static let supportPageURL = "https://ko-fi.com/initiatorworks"
+    static let supportPageURL = "https://ko-fi.com/initiatorworks?app=timeannouncer"
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         // Hide dock icon - we're a menu bar only app
