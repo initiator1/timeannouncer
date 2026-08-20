@@ -10,12 +10,18 @@ the correct destination.
 
 | URL | Result |
 |---|---|
-| `https://ko-fi.com/initiatorworks?app=timeannouncer` | Live. Shows "Buy Douglas a Coffee". Checked in a browser. |
+| `https://ko-fi.com/initiatorworks?app=timeannouncer` | Live. Checked in a browser. |
 | `https://github.com/initiator1/timeannouncer` | 200 |
 | `https://github.com/initiator1/timeannouncer/issues` | 200 |
 | `https://github.com/initiator1/timeannouncer/releases/latest` | 200, redirects to `v1.0.1` |
 | `https://huggingface.co/hexgrad/Kokoro-82M` | 200 |
 | `https://initiatorworks.com` | 200, titled "INITIATOR LLC" |
+
+**`.github/FUNDING.yml` uses the `custom` key on purpose.** The `ko_fi:` key
+takes a bare username and drops the query string, which loses the `app` tag. The
+`github:` key is dead here — GitHub Sponsors is not enabled for the account, and
+GitHub silently omits the Sponsor button rather than showing an error. unstray
+and RedButtonQuit both had a `github:` key that rendered nothing.
 
 **No GitHub Sponsors link exists in this repo.** unstray shipped
 `https://github.com/sponsors/initiator1` in its README, and that page does not
@@ -25,7 +31,12 @@ enable Sponsors. Do not add such a link to this repo.
 
 **How to check a Ko-fi URL.** `curl` cannot do it. Ko-fi answers 403 from
 Cloudflare whether the page exists or not, so a dead link passes a scripted
-check. Load the URL in a real browser and read the page title.
+check. Load the URL in a real browser and confirm the tip form renders.
+
+Do not match on the page title. BOSS changed the Ko-fi display name from
+"Douglas" to "Douglas Baker" on 2026-08-20, so the title moved from "Buy Douglas
+a Coffee" to "Buy Douglas Baker a Coffee". A title check would have failed on a
+live page.
 
 **Do not use `ko-fi.com/initiator1`.** That slug never existed. It shipped as a
 dead link in RedButtonQuit 1.0.0. The correct slug is `initiatorworks`.
@@ -34,16 +45,29 @@ dead link in RedButtonQuit 1.0.0. The correct slug is `initiatorworks`.
 
 The support link carries `?app=timeannouncer` so one Ko-fi page can tell which
 of four apps sent a visitor. The other three apps use `?app=redbuttonquit`,
-`?app=unstray`, and `?app=portmanager`.
+`?app=unstray`, and `?app=portmanager`. The same tagged URL is in
+`.github/FUNDING.yml`.
 
 The parameter records nothing readable today. Ko-fi exposes this data only
-through its Google Analytics 4 integration, and that integration requires a paid
-Ko-fi Contributor account. The tag costs nothing and starts working on the day
-GA4 is connected.
+through its Google Analytics 4 integration, and that needs Contributor status.
 
-**Decision waiting on BOSS:** pay for Ko-fi Contributor and connect GA4, or
-accept that the four apps stay indistinguishable. Until then, do not tell him
-the parameter produces click counts.
+**Contributor is not a paid subscription.** Verified on ko-fi.com/pricing and
+help.ko-fi.com on 2026-08-20. It is a toggle in Settings → Payment that shares
+**5% of tip income** with Ko-fi. There is no monthly charge and the toggle is
+reversible. It affects one-time tips only; Memberships, Shop, and Commissions
+carry 5% either way. Ko-fi Gold is the separate paid tier at $12/month for a 0%
+fee — do not confuse the two.
+
+With Contributor off, tips carry 0%. That is why it is off, and that is a
+defensible trade rather than a blocker.
+
+**Decision waiting on BOSS:** turn Contributor on, give up 5% of tips, and
+connect GA4 to see which app sends supporters — or leave it off, keep 100% of
+tips, and accept that the four apps stay indistinguishable. Five percent of zero
+is zero, so the cost today is nothing.
+
+An earlier version of this file called Contributor "a paid account". That was
+wrong and it turned a reversible toggle into a purchase decision.
 
 ## Stale debug build ran for 12 days — 2026-08-19 — closed
 

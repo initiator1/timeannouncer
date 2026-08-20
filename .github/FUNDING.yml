@@ -1,0 +1,9 @@
+# One Ko-fi page collects for several apps. The `app` parameter identifies
+# which one sent the visitor, so keep the query string.
+#
+# Do NOT use the `ko_fi:` key. It takes a bare username and drops the query
+# string, which loses the tag. `custom` carries the full URL.
+#
+# Do NOT use the `github:` key. GitHub Sponsors is not enabled for this
+# account, and GitHub silently omits the button rather than showing an error.
+custom: ["https://ko-fi.com/initiatorworks?app=timeannouncer"]
