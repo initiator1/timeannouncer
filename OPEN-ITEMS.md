@@ -141,19 +141,77 @@ defensible trade rather than a blocker.
    (`G-M13FZ7VQ2C`). Connecting a personal GA4 ID does not put Google on a page
    Google cannot already see. It adds a dataset BOSS owns.
 
-**Contested, unresolved:** BOSS said on 2026-08-20 that he switched the 5% tips
-toggle on. The RedButtonQuit session looked at his Ko-fi Payment settings the
-same day and reported the Advanced toggle in the off position. Do not assert
-either state. Note the trap that session flagged: the accessibility tree reports
-that control as checkbox "on" because that is its label, not its state.
+**SETTLED 2026-08-21: Contributor is ON.** BOSS sent a screenshot of his Ko-fi
+Payment settings. The "Get all of Ko-fi" toggle is green and in the on position.
+He flipped it, saved, refreshed, and confirmed it held. Tips now carry 5% and
+the Google Analytics option is unlocked.
 
-**Decision waiting on BOSS:** turn Contributor on, give up 5% of tips, and
-connect GA4 to see which app sends supporters — or leave it off, keep 100% of
-tips, and accept that the four apps stay indistinguishable. Five percent of zero
-is zero, so the cost today is nothing.
+The RedButtonQuit session had reported it off the previous day. That reading was
+wrong. Neither that session nor this one should have asserted his account state
+from a rendered control — the thing that settled it was BOSS showing us.
+
+**Remaining step, needs BOSS's accounts:** the tags still record nothing. GA4
+must be connected — create a property with the Ko-fi URL, paste the Measurement
+ID into Ko-fi page settings. Both sit inside his logged-in Google and Ko-fi
+accounts. Do not report the tags as producing data until this is done.
+
+A decision council on 2026-08-21 recommended against turning Contributor on at
+zero supporters, on the grounds that tip messages answer the same question for
+free below about ten supporters. BOSS turned it on anyway. That is his call and
+it is made; do not reopen it.
 
 An earlier version of this file called Contributor "a paid account". That was
 wrong and it turned a reversible toggle into a purchase decision.
+
+## Domain strategy — 2026-08-21 — owner: BOSS
+
+BOSS plans to buy a `.com` for this app and asked whether that forces a rename.
+It does not.
+
+**`timeannouncer.com` is unregistered.** Verified at the .com registry
+(`whois -h whois.verisign-grs.com`) which returns "No match", and there is no
+DNS delegation. It is available at standard price, not premium.
+
+So the domain gives no push to rename. The name decision is brand-only.
+
+**The order matters.** Settle the name before buying the domain. Buying
+`timeannouncer.com` and then renaming wastes it and creates another dead link,
+which is the exact failure this repo spent 2026-08-20 cleaning up. There is no
+urgency — the name has sat unregistered for years.
+
+### The per-app domain pattern is already broken
+
+BOSS registered app domains in late December 2025. Current state, checked
+2026-08-21:
+
+| Domain | State |
+|---|---|
+| `redbuttonquit.com` | **DOWN.** Has nameservers, HTTPS fails outright. RedButtonQuit links to it from Preferences → About, and it shipped dead in 1.0.0 and 1.1.0. |
+| `unstray.com` | Registered 2025-12-26, resolves, behind a bot challenge. |
+| `portmanager.com` | **Impossible.** Registered by someone else in 2001. |
+| `initiatorworks.com` | Live, titled "INITIATOR LLC". |
+| `ai-initiator.com` | Live. Hosts the product list Ko-fi points at. |
+
+One of four app domains is dead, one can never exist, and each one that does
+exist is a renewal date and an uptime dependency that nothing is watching.
+`initiatorworks.com/timeannouncer` costs no new domain, no new renewal, and no
+new thing that can rot.
+
+Verified-available `.com` alternatives, if the name is ever changed:
+`speakclock.com`, `clockaloud.com`, `tickaloud.com`, `hourlyaloud.com`,
+`quarterchime.com`, `theclockspeaks.com`. Taken: `chimely.com`, `sayclock.com`,
+`belfryapp.com`, `tocktalk.com`.
+
+### Is the name taken?
+
+No, in any sense that forces a change. No macOS app carries it. The closest is
+an iOS app, "Talking Clock: Time Announcer", which uses the phrase as a
+descriptor after its actual brand. No trademark found. Eleven GitHub repos share
+the name, all with zero or one star; this one already ranks first.
+
+The name is descriptive, which makes it weak to own and hard to find in a
+crowded category, and clear to anyone who hears it. That trade is BOSS's to
+make, not a defect to fix.
 
 ## Stale debug build ran for 12 days — 2026-08-19 — closed
 
