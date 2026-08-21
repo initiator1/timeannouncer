@@ -132,6 +132,21 @@ fee — do not confuse the two.
 With Contributor off, tips carry 0%. That is why it is off, and that is a
 defensible trade rather than a blocker.
 
+**Two facts measured on the live page, 2026-08-20:**
+
+1. The `?app=` parameter survives. `location.search` on
+   `ko-fi.com/initiatorworks?app=timeannouncer` is `?app=timeannouncer` — Ko-fi
+   does not redirect or strip it. Attribution is technically possible.
+2. The Ko-fi page already loads Google Tag Manager and Ko-fi's own GA4 property
+   (`G-M13FZ7VQ2C`). Connecting a personal GA4 ID does not put Google on a page
+   Google cannot already see. It adds a dataset BOSS owns.
+
+**Contested, unresolved:** BOSS said on 2026-08-20 that he switched the 5% tips
+toggle on. The RedButtonQuit session looked at his Ko-fi Payment settings the
+same day and reported the Advanced toggle in the off position. Do not assert
+either state. Note the trap that session flagged: the accessibility tree reports
+that control as checkbox "on" because that is its label, not its state.
+
 **Decision waiting on BOSS:** turn Contributor on, give up 5% of tips, and
 connect GA4 to see which app sends supporters — or leave it off, keep 100% of
 tips, and accept that the four apps stay indistinguishable. Five percent of zero
