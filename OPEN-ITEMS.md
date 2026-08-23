@@ -222,3 +222,15 @@ Updates…**, which shipped in 1.0.1. It was restarted on the current build on
 
 Worth knowing: `open` on the app bundle activates an already-running instance
 instead of loading new code. Kill the process first when verifying a UI change.
+
+<!-- liveness-sweep:begin -->
+## Liveness gaps
+
+_This is what was true on 2026-08-23, not necessarily what is true now._ The section is maintained automatically and clears itself once every check is live. Everything outside these markers is left alone.
+
+**Before acting on anything here, re-run the check.** Do not fix from this snapshot - another session may have already closed it.
+
+    python3 ~/.claude/scripts/liveness-sweep.py .
+
+- .github/FUNDING.yml:9, CHANGELOG.md:6, README.md:80, TimeAnnouncer/TimeAnnouncerApp.swift:21 and 4 more: https://ko-fi.com/initiatorworks?app=timeannouncer: Cloudflare blocks scripted checks; load it in a browser and confirm the page renders its form — do not match the title, it changes.
+<!-- liveness-sweep:end -->
