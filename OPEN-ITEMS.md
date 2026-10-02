@@ -3,6 +3,40 @@
 Durable notes for this repo. Add a date to every entry. Delete an entry when it
 is closed, and say where it went.
 
+## Candidate 1.0.2 release hold - 2026-10-02
+
+Owner: engineering agent for acceptance and packaging; BOSS for external approvals.
+The earlier PrivacyInfo landing obligation is incorporated in signed candidate
+1.0.2, build 3. It is installed locally. Public 1.0.1 remains unchanged.
+The [release record](docs/release-checklist.md) owns the full evidence and recovery path.
+
+Remaining obligations:
+
+- Finish menu, audible scheduled speech, persistence, and voice-failure acceptance.
+  The desktop tool cannot target the menu-only app. Permission for a narrowly
+  scoped macOS accessibility script is pending. Complete when observed outcomes
+  are recorded, including a user's confirmation of audible delivery.
+- Obtain BOSS's permission for Apple notarization. Automatic approval review
+  rejected the upload because external Apple submission was not authorized.
+  Complete when the concrete candidate has a valid ticket and passes Gatekeeper.
+- Obtain separate publication approval only after acceptance and notarization.
+  Complete when the approved public download is verified. No upload or push occurred.
+
+The smoke probe's temporary path redirected login registration during this audit.
+The installed-only probe is repaired. macOS now records the enabled app at
+`/Applications/TimeAnnouncer.app`, and original preferences are unchanged.
+Keep real login and sleep/wake, Intel/macOS 13 runtime, fresh Kokoro setup,
+authorized ElevenLabs checks, modal-alert reopening, and support email delivery as
+follow-ups in the release record. No additional tasks are created.
+
+App-only screenshots are saved. A full Finder screenshot was rejected by automatic
+approval review because unrelated private content could appear. That broader
+capture was abandoned; no unrelated content is needed for acceptance.
+
+Live link recheck on 2026-10-02: the public release resolves to 1.0.1, GitHub issues
+renders, and the tagged Ko-fi page renders its tip form. This supersedes the old
+Ko-fi rendering gap below. No payment, message, or account change was made.
+
 ## Outbound link audit — 2026-08-20
 
 Every URL that ships in this repo was checked live on 2026-08-20. All resolve to
@@ -226,11 +260,11 @@ instead of loading new code. Kill the process first when verifying a UI change.
 <!-- liveness-sweep:begin -->
 ## Liveness gaps
 
-_This is what was true on 2026-08-23, not necessarily what is true now._ The section is maintained automatically and clears itself once every check is live. Everything outside these markers is left alone.
+_This is what was true on 2026-09-21, not necessarily what is true now._ The section is maintained automatically and clears itself once every check is live. Everything outside these markers is left alone.
 
 **Before acting on anything here, re-run the check.** Do not fix from this snapshot - another session may have already closed it.
 
     python3 ~/.claude/scripts/liveness-sweep.py .
 
-- .github/FUNDING.yml:9, CHANGELOG.md:6, README.md:80, TimeAnnouncer/TimeAnnouncerApp.swift:21 and 4 more: https://ko-fi.com/initiatorworks?app=timeannouncer: Cloudflare blocks scripted checks; load it in a browser and confirm the page renders its form — do not match the title, it changes.
+- .github/FUNDING.yml:9, CHANGELOG.md:6, README.md:80, TimeAnnouncer/TimeAnnouncerApp.swift:21 and 2 more: https://ko-fi.com/initiatorworks?app=timeannouncer: Cloudflare blocks scripted checks; load it in a browser and confirm the page renders its form — do not match the title, it changes.
 <!-- liveness-sweep:end -->

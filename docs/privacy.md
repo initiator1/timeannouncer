@@ -1,40 +1,69 @@
 # Privacy Policy
 
-Last updated: July 26, 2026
+Last updated: October 2, 2026
 
-TimeAnnouncer is a macOS menu bar app that announces the current time aloud.
+Time Announcer is a macOS menu bar app that speaks the current time.
+This policy describes the 1.0.2 candidate. See the
+[release record](release-checklist.md) for its publication status.
 
-## Data Collection
+## Local preferences and diagnostics
 
-Time Announcer has no analytics, no telemetry, and no servers of its own. Nothing about you is collected, sold, or shared with anyone by this app or its developer.
+The app has no analytics or telemetry and no backend of its own.
+It stores your announcement setting, interval, timing mode, volume, selected
+voice, and launch-at-login preference in its own local UserDefaults.
 
-The app stores preferences locally on your Mac, including whether announcements are enabled, the selected interval, timing mode, volume, voice provider, and launch-at-login preference.
+The candidate includes `PrivacyInfo.xcprivacy`. It declares app-only UserDefaults
+access with Apple reason `CA92.1`, no tracking, and no collected data types.
+This manifest describes the app's declared behavior. It does not cover the
+separate websites or speech services you choose to use.
 
-The one exception is entirely your choice: if you enable the optional ElevenLabs voice, the phrase being spoken is sent to ElevenLabs using your own API key. See Speech Providers below. The two other voices never leave your Mac.
+**Copy Support Diagnostics** places the app version, macOS version, settings,
+and voice setup indicators on your clipboard. It includes whether an ElevenLabs
+key is saved, but excludes the key itself. The app does not send this report.
+You choose whether to share it by email or in a public GitHub issue.
 
-## Speech Providers
+## Speech providers
 
-TimeAnnouncer supports three speech providers:
+- **System Voice:** The built-in macOS speech engine speaks the time locally.
+- **Kokoro:** A local Python environment synthesizes time phrases and caches audio
+  on your Mac. Setup downloads packages and model files from third-party hosts.
+  Missing model files can require further downloads. Those download requests
+  use your internet connection; local synthesis does not require a developer backend.
+- **ElevenLabs:** When selected, this optional provider receives the phrase being
+  spoken, such as "It's ten thirty", and your API key to generate audio.
+  Requests use your own ElevenLabs account and may consume paid credits.
+  That provider's terms and privacy policy apply to those requests.
 
-- **System Voice**: uses the speech engine built into macOS. Spoken text stays on your Mac.
-- **Kokoro 82M**: uses a local Python-based speech environment installed under your user account. Spoken time phrases are synthesized locally and cached as audio files on your Mac.
-- **ElevenLabs**: optional cloud speech. If you choose ElevenLabs and save an API key, TimeAnnouncer sends the phrase being spoken, such as "It's ten thirty", to ElevenLabs to generate audio.
+Choose System Voice to stop new ElevenLabs speech requests. Pausing stops scheduled
+announcements. A manual preview can still request speech from the selected provider.
 
-## API Keys
+## API keys
 
-If you use ElevenLabs, your API key is stored in the macOS Keychain. TimeAnnouncer does not transmit your API key anywhere except to ElevenLabs when requesting speech audio.
+The ElevenLabs key is stored in macOS Keychain under service `com.timeannouncer.app`
+and item `elevenlabs_api_key`. Speech requests transmit it to ElevenLabs.
+Updating the app does not require replacing or exporting the key.
 
-## Local Files
+## Local files and removal
 
-Kokoro uses:
+Kokoro uses these app folders:
 
-- `~/Library/Application Support/TimeAnnouncer/Kokoro` for the local speech environment.
-- `~/Library/Caches/TimeAnnouncer/Kokoro` for generated audio cache files.
+- `~/Library/Application Support/TimeAnnouncer/Kokoro` for its Python environment and setup audio.
+- `~/Library/Caches/TimeAnnouncer/Kokoro` for generated audio.
 
-You can remove these folders to delete Kokoro local data.
+Its dependencies may also cache downloaded models under their own user cache
+folders, such as `~/.cache/huggingface`. Do not delete a shared model cache without
+checking whether another app uses it.
 
-## Contact
+Quit Time Announcer before removing its local speech folders. Removing the app
+bundle alone leaves preferences, Keychain data, and downloaded speech files intact.
+Ask support for help if you want to remove those records as well.
 
-For support or privacy questions, email **support@initiatorworks.com**.
+## External links and support
 
+**Check for Updates…** opens GitHub. **Buy Me a Coffee…** opens Ko-fi with the
+`app=timeannouncer` tag, which identifies the referring app. Your browser makes
+those website requests. The websites' privacy policies apply.
+
+Email **support@initiatorworks.com** for help or privacy questions.
+Support messages contain the information you choose to send.
 Time Announcer is published by INITIATOR LLC.

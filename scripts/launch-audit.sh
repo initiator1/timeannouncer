@@ -4,15 +4,9 @@ set -u
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 export PATH="/opt/homebrew/bin:/usr/local/bin:${PATH}"
 
-BUILD_ROOT="${ROOT_DIR}/build/release"
-APP_PATH="${BUILD_ROOT}/DerivedData/Build/Products/Release/TimeAnnouncer.app"
-ZIP_PATH="${BUILD_ROOT}/TimeAnnouncer.zip"
-ZIP_SHA256_PATH="${ZIP_PATH}.sha256"
-DMG_PATH="${BUILD_ROOT}/TimeAnnouncer.dmg"
-DMG_SHA256_PATH="${DMG_PATH}.sha256"
 SUPPORT_DOC="${ROOT_DIR}/docs/support.md"
-RELEASE_NOTES="${ROOT_DIR}/docs/release-notes/v1.0.md"
-NOTARYTOOL_PROFILE="${NOTARYTOOL_PROFILE:-notarytool-profile}"
+VERSION="$(python3 "${ROOT_DIR}/scripts/release-metadata.py" version)" || exit 1
+RELEASE_NOTES="${RELEASE_NOTES_PATH:-${ROOT_DIR}/docs/release-notes/v${VERSION}.md}"
 
 failures=0
 warnings=0
@@ -39,14 +33,6 @@ require_tool() {
     print_pass "$1 is available"
   else
     print_fail "$1 is available" "Install or select the required developer toolchain."
-  fi
-}
-
-require_file() {
-  if [[ -e "$1" ]]; then
-    print_pass "$2 exists"
-  else
-    print_fail "$2 exists" "$1 is missing. Run ./scripts/build-release.sh first."
   fi
 }
 
@@ -88,9 +74,9 @@ check_optional_command() {
   return 1
 }
 
-printf 'TimeAnnouncer Launch Audit\n'
+printf 'TimeAnnouncer Technical Release Audit\n'
 printf 'Repository: %s\n' "$ROOT_DIR"
-printf 'Notary profile: %s\n\n' "$NOTARYTOOL_PROFILE"
+printf 'Candidate: %s\n\n' "$VERSION"
 
 require_tool codesign
 require_tool git
@@ -103,7 +89,7 @@ printf '\nRepository\n'
 if git -C "$ROOT_DIR" diff --quiet && git -C "$ROOT_DIR" diff --cached --quiet; then
   print_pass "tracked working tree is clean"
 else
-  print_fail "tracked working tree is clean" "Commit, stash, or revert tracked changes before publishing."
+  print_fail "tracked working tree is clean" "Review and commit the release changes before publishing. Preserve unrelated work."
 fi
 
 if git -C "$ROOT_DIR" ls-files --others --exclude-standard | grep -q .; then
@@ -125,60 +111,8 @@ if check_optional_command "GitHub CLI is available" gh; then
 fi
 
 printf '\nRelease Artifacts\n'
-require_file "$APP_PATH" "release app"
-require_file "$ZIP_PATH" "notarization zip"
-require_file "$ZIP_SHA256_PATH" "zip SHA-256 file"
-require_file "$DMG_PATH" "installer DMG"
-require_file "$DMG_SHA256_PATH" "DMG SHA-256 file"
-
-if [[ -f "$ZIP_PATH" && -f "$ZIP_SHA256_PATH" ]]; then
-  check_command "zip checksum matches" bash -c 'cd "$1" && shasum -a 256 -c "$(basename "$2")"' _ "$BUILD_ROOT" "$ZIP_SHA256_PATH"
-fi
-
-if [[ -f "$DMG_PATH" && -f "$DMG_SHA256_PATH" ]]; then
-  check_command "DMG checksum matches" bash -c 'cd "$1" && shasum -a 256 -c "$(basename "$2")"' _ "$BUILD_ROOT" "$DMG_SHA256_PATH"
-fi
-
-if [[ -d "$APP_PATH" ]]; then
-  check_command "release app signature is valid" codesign --verify --deep --strict --verbose=2 "$APP_PATH"
-
-  signature_details="$(codesign -dv --verbose=4 "$APP_PATH" 2>&1)"
-  if printf '%s\n' "$signature_details" | grep -Fq "flags=0x10000(runtime)"; then
-    print_pass "hardened runtime is enabled"
-  else
-    print_fail "hardened runtime is enabled" "$signature_details"
-  fi
-
-  if printf '%s\n' "$signature_details" | grep -Fq "Timestamp="; then
-    print_pass "release app has a secure timestamp"
-  else
-    print_fail "release app has a secure timestamp" "$signature_details"
-  fi
-
-  if codesign -d --entitlements :- "$APP_PATH" 2>/dev/null | grep -Fq "get-task-allow"; then
-    print_fail "release app excludes get-task-allow" "Debug entitlement found in release signature."
-  else
-    print_pass "release app excludes get-task-allow"
-  fi
-fi
-
-if [[ -f "$DMG_PATH" ]]; then
-  check_command "DMG verifies" hdiutil verify "$DMG_PATH"
-  check_command "DMG signature is valid" codesign --verify --verbose=2 "$DMG_PATH"
-fi
-
-printf '\nNotarization\n'
-check_command "notarytool profile is usable" xcrun notarytool history --keychain-profile "$NOTARYTOOL_PROFILE"
-
-if [[ -d "$APP_PATH" ]]; then
-  check_command "app notarization ticket validates" xcrun stapler validate "$APP_PATH"
-  check_command "Gatekeeper accepts release app" spctl --assess --type execute --verbose=4 "$APP_PATH"
-fi
-
-if [[ -f "$DMG_PATH" ]]; then
-  check_command "DMG notarization ticket validates" xcrun stapler validate "$DMG_PATH"
-  check_command "Gatekeeper accepts installer DMG" spctl --assess --type open --context context:primary-signature --verbose=4 "$DMG_PATH"
-fi
+check_command "candidate packages match source, version, signature, and notarization" \
+  env REQUIRE_NOTARIZATION=1 RUN_APP=0 "${ROOT_DIR}/scripts/smoke-release.sh"
 
 printf '\nPublic Materials\n'
 check_contains_no_placeholder "$SUPPORT_DOC" "Launch Support Placeholder" "public support path is final"
@@ -199,9 +133,10 @@ printf 'Failures: %d\n' "$failures"
 printf 'Warnings: %d\n' "$warnings"
 
 if [[ "$failures" -gt 0 ]]; then
-  printf 'Launch status: NOT READY\n'
+  printf 'Technical release checks: FAIL\n'
   exit 1
 fi
 
-printf 'Launch status: READY\n'
+printf 'Technical release checks: PASS\n'
+printf 'Installed-app acceptance and publication approval are recorded separately in docs/release-checklist.md.\n'
 exit 0

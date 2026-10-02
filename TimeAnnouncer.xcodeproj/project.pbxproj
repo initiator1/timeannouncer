@@ -21,6 +21,9 @@
 		E9123456000B /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = E9123455000E /* Assets.xcassets */; };
 		E9123456000C /* SupportDiagnostics.swift in Sources */ = {isa = PBXBuildFile; fileRef = E9123455000F /* SupportDiagnostics.swift */; };
 		E9123456000D /* SupportDiagnosticsTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E91234550010 /* SupportDiagnosticsTests.swift */; };
+		E9123456000E /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = E91234550011 /* PrivacyInfo.xcprivacy */; };
+		E9123456000F /* PrivacyInfoTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E91234550012 /* PrivacyInfoTests.swift */; };
+		E91234560010 /* KokoroWorkerTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E91234550013 /* KokoroWorkerTests.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -51,6 +54,9 @@
 		E9123455000E /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		E9123455000F /* SupportDiagnostics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportDiagnostics.swift; sourceTree = "<group>"; };
 		E91234550010 /* SupportDiagnosticsTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SupportDiagnosticsTests.swift; sourceTree = "<group>"; };
+		E91234550011 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		E91234550012 /* PrivacyInfoTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrivacyInfoTests.swift; sourceTree = "<group>"; };
+		E91234550013 /* KokoroWorkerTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = KokoroWorkerTests.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -95,6 +101,7 @@
 				E9123455000F /* SupportDiagnostics.swift */,
 				E9123455000E /* Assets.xcassets */,
 				E91234550004 /* Info.plist */,
+				E91234550011 /* PrivacyInfo.xcprivacy */,
 			);
 			path = TimeAnnouncer;
 			sourceTree = "<group>";
@@ -114,6 +121,8 @@
 				E9123455000B /* TimeAnnouncementScheduleTests.swift */,
 				E9123455000D /* SettingsManagerTests.swift */,
 				E91234550010 /* SupportDiagnosticsTests.swift */,
+				E91234550012 /* PrivacyInfoTests.swift */,
+				E91234550013 /* KokoroWorkerTests.swift */,
 			);
 			path = TimeAnnouncerTests;
 			sourceTree = "<group>";
@@ -202,6 +211,7 @@
 				E91234560007 /* KokoroSynth.py in Resources */,
 				E9123456AA01 /* setup-kokoro.sh in Resources */,
 				E9123456000B /* Assets.xcassets in Resources */,
+				E9123456000E /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -237,6 +247,8 @@
 				E91234560009 /* TimeAnnouncementScheduleTests.swift in Sources */,
 				E9123456000A /* SettingsManagerTests.swift in Sources */,
 				E9123456000D /* SupportDiagnosticsTests.swift in Sources */,
+				E9123456000F /* PrivacyInfoTests.swift in Sources */,
+				E91234560010 /* KokoroWorkerTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -374,7 +386,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = TimeAnnouncer/Info.plist;
 				INFOPLIST_KEY_LSUIElement = YES;
@@ -384,7 +396,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.1;
+				MARKETING_VERSION = 1.0.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.timeannouncer.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;
@@ -399,7 +411,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_STYLE = Automatic;
 				COMBINE_HIDPI_IMAGES = YES;
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 3;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = TimeAnnouncer/Info.plist;
 				INFOPLIST_KEY_LSUIElement = YES;
@@ -409,7 +421,7 @@
 					"$(inherited)",
 					"@executable_path/../Frameworks",
 				);
-				MARKETING_VERSION = 1.0.1;
+				MARKETING_VERSION = 1.0.2;
 				PRODUCT_BUNDLE_IDENTIFIER = com.timeannouncer.app;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_EMIT_LOC_STRINGS = YES;

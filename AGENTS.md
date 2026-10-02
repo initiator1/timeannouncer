@@ -1,68 +1,120 @@
 # AGENTS.md
 
-This file provides guidance to Codex (Codex.ai/code) when working with code in this repository.
+Repository guidance for maintaining Time Announcer. Read the applicable global
+instructions first. Preserve other agents' and the user's work.
 
-## Project Overview
+## Product and release scope
 
-TimeAnnouncer is a macOS menu bar application that announces the current time aloud at configurable intervals. It supports three voice options: Kokoro 82M local TTS (default), macOS system voice, or ElevenLabs AI voice (Zara).
+Time Announcer is a free macOS menu bar app for people who want spoken time cues
+without checking a screen. Its core job is to preview a voice, choose a schedule,
+resume announcements, and pause them when needed.
 
-## Build & Run
+System Voice needs no account or setup. Kokoro is an optional local voice with
+separate dependency/model downloads. ElevenLabs is an optional cloud provider
+using the user's own key and credits. Do not run live paid speech probes without
+authorization for that account, purpose, and spending.
 
-Native Swift/Xcode project with no external package dependencies (no SPM, no CocoaPods).
+The current candidate is 1.0.2, build 3. It targets macOS 13 or later and packages
+Apple silicon and Intel binaries. Runtime proof for each platform is separate.
+Use `docs/release-checklist.md` for the current acceptance and publication state.
+Do not infer readiness from a build, screenshot, or archive receipt.
 
-- **Open**: `open TimeAnnouncer.xcodeproj`
-- **Build (CLI)**: `xcodebuild -project TimeAnnouncer.xcodeproj -scheme TimeAnnouncer -configuration Debug build`
-- **Test (CLI)**: `xcodebuild test -project TimeAnnouncer.xcodeproj -scheme TimeAnnouncer -destination 'platform=macOS,arch=arm64'`
-- **Build (Xcode)**: Cmd+B
-- **Run (Xcode)**: Cmd+R
-- **Tests** live in `TimeAnnouncerTests/`
+## Build and test
 
-## Architecture
+The Swift app has no external package manager. Use Xcode and its selected tools.
+The test target requires macOS 14 or later.
 
-Small native project, with app sources in `TimeAnnouncer/` and tests in `TimeAnnouncerTests/`:
+```sh
+xcodebuild -project TimeAnnouncer.xcodeproj -scheme TimeAnnouncer -configuration Debug build
+xcodebuild test -project TimeAnnouncer.xcodeproj -scheme TimeAnnouncer -destination 'platform=macOS,arch=arm64'
+```
 
-| File | Role |
-|------|------|
-| `TimeAnnouncerApp.swift` | App entry point, AppDelegate, menu bar UI (NSStatusBar + NSMenu) |
-| `TimeAnnouncer.swift` | Core timer orchestration, time formatting to natural language, speech output |
-| `TimeAnnouncementSchedule.swift` | Clock-aligned interval policy and boundary calculations |
-| `SettingsManager.swift` | UserDefaults wrapper for preferences |
-| `KeychainHelper.swift` | macOS Security framework wrapper for API key storage |
-| `ElevenLabsClient.swift` | Async HTTP client for ElevenLabs TTS API |
-| `KokoroClient.swift` | Local Kokoro TTS bridge, cache, and warmed Python worker |
-| `KokoroSynth.py` | Bundled Python Kokoro synthesis helper and worker protocol |
+Use an available destination when testing on Intel. Existing tests live in
+`TimeAnnouncerTests`. Name the failure risk and missing coverage before adding a
+test. Choose narrow tests for a change. Keep persistence, cancellation, concurrency,
+privacy, and permission coverage. Do not rerun the full suite only for a handoff.
 
-### Data Flow
+Release-script fixture checks:
 
-`AppDelegate` owns both `SettingsManager` and `TimeAnnouncer`. User interactions in the menu modify `SettingsManager`, then `AppDelegate` calls `TimeAnnouncer.start()/stop()/updateInterval()` to apply changes. `TimeAnnouncer` reads settings from `SettingsManager` and calls `KokoroClient`, `ElevenLabsClient`, or `NSSpeechSynthesizer` to produce audio.
+```sh
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s scripts -p 'test_release_metadata.py'
+./scripts/check-signing-defaults.sh
+./scripts/check-privacyinfo-release.sh --selftest
+./scripts/publish-github-release.sh --selftest
+```
 
-### Key Design Decisions
+## Code ownership
 
-1. **Timing modes** - Two scheduling strategies: **Clock-aligned** (default) snaps to natural boundaries (:00/:15/:30/:45) via `calculateDelayToNextBoundary()`. **Fixed interval** announces immediately then repeats at exact interval. Configurable via `SettingsManager.timingMode`.
+| File | Responsibility |
+|------|----------------|
+| `TimeAnnouncer/TimeAnnouncerApp.swift` | App entry, AppDelegate, menu, onboarding, login registration |
+| `TimeAnnouncer/TimeAnnouncer.swift` | Timer lifecycle, phrase formatting, speech tasks, fallback and status |
+| `TimeAnnouncer/TimeAnnouncementSchedule.swift` | Clock-aligned interval and boundary rules |
+| `TimeAnnouncer/SettingsManager.swift` | Preferences, first-use defaults, preservation of existing settings |
+| `TimeAnnouncer/SupportDiagnostics.swift` | Support text without secret values |
+| `TimeAnnouncer/KeychainHelper.swift` | API key storage through Security framework |
+| `TimeAnnouncer/ElevenLabsClient.swift` | Optional HTTP speech request |
+| `TimeAnnouncer/KokoroClient.swift` | Local worker lifecycle, deadlines, cache and audio result |
+| `TimeAnnouncer/KokoroSynth.py` | Python synthesis and worker protocol |
+| `scripts/setup-kokoro.sh` | Optional local dependency setup, also bundled in the app |
+| `scripts/release-metadata.py` | Candidate version/build and source identity checks |
 
-2. **Graceful degradation** - Kokoro and ElevenLabs errors silently fall back to `NSSpeechSynthesizer`. Audio playback uses `AVAudioPlayer` for Kokoro/ElevenLabs, `NSSpeechSynthesizer` for system voice.
+`AppDelegate` owns `SettingsManager` and `TimeAnnouncer`. Menu actions update
+preferences and tell `TimeAnnouncer` to apply them. Keep scheduling policy in
+`TimeAnnouncementSchedule`, speech lifecycle in `TimeAnnouncer`, and worker process
+management in `KokoroClient`.
 
-3. **Anti-double-fire guard** - `minimumAnnouncementGap` (2s) prevents rapid announcements at clock boundaries. Clock-aligned timer callbacks also re-check the actual wall clock before speaking and only announce inside a short post-boundary grace window, preventing early/stale timers from speaking non-boundary minutes like `:59`.
+## Behavior contracts
 
-4. **Menu bar only** - `LSUIElement=true` in Info.plist + `NSApp.setActivationPolicy(.accessory)` hides dock icon.
+- Fresh profiles start paused on System Voice, at 60 minutes, clock-aligned,
+  25% app volume, and launch at login off. `applyFirstLaunchDefaultsIfNeeded()`
+  applies this only when no user preferences exist.
+- Updates preserve existing preferences. Legacy getters keep their older fallbacks,
+  including 10% volume and Kokoro for a previously configured profile without a voice value.
+- Clock-aligned intervals must divide 60 evenly. Fixed Interval accepts positive
+  whole minutes and announces immediately when started.
+- The two-second gap and wall-clock boundary check prevent early or duplicate
+  automatic announcements. Manual speech still works while paused.
+- Optional voice failures fall back to System Voice and expose the result in the
+  menu. A saved key or installed executable is only a setup indicator.
+- `LSUIElement` and accessory activation keep the app in the menu bar.
+  Login state comes from `SMAppService`; approval and actual future login are separate checks.
+- Menu volume presets are 10%, 25%, 50%, 75%, and 100%. Volume applies at speech time.
+- Keychain service is `com.timeannouncer.app`; item is `elevenlabs_api_key`.
+  Never print or export its value for diagnosis.
+- Kokoro uses `af_heart`, the venv under `~/Library/Application Support/TimeAnnouncer/Kokoro`,
+  and WAV cache under `~/Library/Caches/TimeAnnouncer/Kokoro`. Downloads can also use shared dependency caches.
+- Provider identifiers are implementation choices in `ElevenLabsClient.swift`.
+  Verify provider documentation before changing them. A key's presence does not authorize a paid probe.
+- Hours are spoken as words. Single-digit minutes use "oh". AM/PM is spoken on the hour.
+- The tip URL is `https://ko-fi.com/initiatorworks?app=timeannouncer` in the app,
+  README, and funding file. Verify its rendered destination before changing it.
 
-5. **Launch at login** - Uses `SMAppService` (macOS 13+) via ServiceManagement framework.
+## Maintenance and release
 
-### Gotchas
+`docs/publishing.md` owns setup, isolated preview, packaging, installation,
+publication, and rollback steps. `docs/support.md` owns user recovery instructions.
+`docs/privacy.md` describes local storage and optional external traffic.
 
-- **Volume** defaults to `0.1`, configurable via menu (10%/25%/50%/75%/100%). Stored in `SettingsManager.volume`, read at announcement time — no timer restart needed.
-- **Keychain key name**: `elevenlabs_api_key` (service: `com.timeannouncer.app`). Referenced in both `SettingsManager` and `ElevenLabsClient`.
-- **ElevenLabs voice/model are hardcoded**: Voice ID `jqcCZkN6Knx8BJ5TBdYR` (Zara), Model `eleven_flash_v2_5`.
-- **Kokoro voice/cache are hardcoded**: Voice `af_heart`, venv `~/Library/Application Support/TimeAnnouncer/Kokoro/venv`, generated WAV cache `~/Library/Caches/TimeAnnouncer/Kokoro`. When Kokoro is selected, the app warms a long-lived local Python worker so manual announcements do not reload the model for each click.
-- **Clock-aligned custom intervals** must divide evenly into an hour. Fixed interval mode accepts arbitrary positive minute values.
-- **UserDefaults defaults**: `isEnabled` defaults to `true` (not standard UserDefaults false), `intervalMinutes` defaults to `60`, `voiceProvider` defaults to `kokoro`, `timingMode` defaults to `clockAligned`, `volume` defaults to `0.1`.
-- **Menu rebuilds entirely** on every state change via `setupMenu()` — no incremental updates.
-- **Support link is hardcoded**: `AppDelegate.supportPageURL` = `https://ko-fi.com/initiatorworks?app=timeannouncer`, opened by the **Buy Me a Coffee…** menu item. One Ko-fi page serves several apps, so the `app` parameter identifies which one sent the visitor. Keep the same value in the README link. A sibling app once shipped a wrong slug as a dead link — verify the page loads before changing this.
-- **Time speech format**: Hours are words ("three"), minutes use "oh" prefix for single digits ("three oh five"). AM/PM only spoken on the hour.
+Use `TIMEANNOUNCER_DEFAULTS_SUITE` for an isolated preference preview of the verified
+installed `/Applications/TimeAnnouncer.app`. Never launch a temporary or DerivedData
+copy for first-use checks. macOS can retarget the existing login registration to
+that copy's path even without a registration action. Preference isolation does not
+isolate Keychain, audio output, Kokoro storage, or login registration. Quit the preview
+before deleting its suite, then relaunch the installed app normally. Never clear real
+data to manufacture first use. `RUN_APP=1` requires an exactly matching installed
+candidate; default package smoke does not launch an app.
 
-## Requirements
+Release builds retain the previous complete candidate in `build/release-history`.
+The 2026-10-02 audit also preserves the former installed app and preferences under
+`build/release-audit-2026-10-02`. Verify installed version and running path after
+replacement. Merely opening a new bundle may activate an older running instance.
 
-- macOS 13.0+ (for SMAppService)
-- Xcode 15.0+
-- Local Kokoro setup: `./scripts/setup-kokoro.sh`
-- Optional: ElevenLabs API key for premium voice
+Routine local engineering and recoverable installation belong to the agent.
+Honor existing authorization and review holds. Ask the human owner only for missing
+product, spending, privacy, account, or external publication decisions.
+A draft GitHub release is an external upload. Do not publish, message people,
+charge money, or change accounts without applicable authorization.
+
+Update only affected documentation. Record unresolved release obligations in
+`OPEN-ITEMS.md` and candidate evidence in `docs/release-checklist.md`.

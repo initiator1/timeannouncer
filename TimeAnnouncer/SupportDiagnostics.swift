@@ -29,7 +29,8 @@ enum SupportDiagnostics {
     static func make(
         settingsManager: SettingsManager,
         environment: SupportDiagnosticsEnvironment = .live(),
-        hasElevenLabsApiKey: Bool? = nil
+        hasElevenLabsApiKey: Bool? = nil,
+        loginStatus: String? = nil
     ) -> String {
         let apiKeySaved = hasElevenLabsApiKey ?? settingsManager.hasElevenLabsApiKey
         let formatter = ISO8601DateFormatter()
@@ -45,7 +46,7 @@ enum SupportDiagnostics {
             "Voice Provider: \(voiceProviderTitle(settingsManager.voiceProvider))",
             "Voice Readiness: \(voiceReadiness(settingsManager: settingsManager, kokoroInstalled: environment.kokoroInstalled, hasElevenLabsApiKey: apiKeySaved))",
             "Volume: \(Int(round(settingsManager.volume * 100)))%",
-            "Launch at Login: \(yesNo(settingsManager.launchAtLogin))",
+            "Launch at Login: \(loginStatus ?? yesNo(settingsManager.launchAtLogin))",
             "Kokoro Installed: \(yesNo(environment.kokoroInstalled))",
             "ElevenLabs API Key Saved: \(yesNo(apiKeySaved))"
         ].joined(separator: "\n")
@@ -84,9 +85,9 @@ enum SupportDiagnostics {
         case .system:
             return "Ready"
         case .kokoro:
-            return kokoroInstalled ? "Ready" : "Needs Kokoro Install"
+            return kokoroInstalled ? "Installed (not verified)" : "Needs Kokoro Install"
         case .elevenlabs:
-            return hasElevenLabsApiKey ? "Ready" : "Needs ElevenLabs API Key"
+            return hasElevenLabsApiKey ? "Key saved (not verified)" : "Needs ElevenLabs API Key"
         }
     }
 }

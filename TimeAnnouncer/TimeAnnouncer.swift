@@ -2,7 +2,8 @@ import Foundation
 import AppKit
 import AVFoundation
 
-class TimeAnnouncer {
+@MainActor
+class TimeAnnouncer: NSObject, AVAudioPlayerDelegate, NSSpeechSynthesizerDelegate {
     private var timer: Timer?
     private let synthesizer = NSSpeechSynthesizer()
     private var audioPlayer: AVAudioPlayer?
@@ -17,9 +18,15 @@ class TimeAnnouncer {
     // Fix 3: Track in-flight ElevenLabs tasks for cancellation
     private var currentAnnouncementTask: Task<Void, Never>?
     private var pendingAnnouncementText: String?
+    private(set) var speechStatus: String?
+    var onSpeechStatusChange: (() -> Void)?
+    private var systemSpeechActive = false
+    private var fallbackStatus: String?
 
     init(settingsManager: SettingsManager) {
         self.settingsManager = settingsManager
+        super.init()
+        synthesizer.delegate = self
     }
 
     func start() {
@@ -98,9 +105,11 @@ class TimeAnnouncer {
     /// Schedules announcements at a fixed interval from now
     private func scheduleFixedInterval() {
         announceCurrentTime()
-        let interval = TimeInterval(settingsManager.intervalMinutes * 60)
+        // Convert before multiplying so a persisted large interval cannot trap.
+        let interval = TimeInterval(settingsManager.intervalMinutes) * 60
         let t = Timer(timeInterval: interval, repeats: true) { [weak self] _ in
-            self?.announceCurrentTime()
+            // This timer is installed only on RunLoop.main below.
+            MainActor.assumeIsolated { self?.announceCurrentTime() }
         }
         RunLoop.main.add(t, forMode: .common)
         timer = t
@@ -110,6 +119,16 @@ class TimeAnnouncer {
         timer?.invalidate()
         timer = nil
         stopAllAudio()
+    }
+
+    func cancelCurrentSpeech() {
+        stopAllAudio()
+    }
+
+    private func setSpeechStatus(_ status: String?) {
+        guard speechStatus != status else { return }
+        speechStatus = status
+        onSpeechStatusChange?()
     }
 
     func updateInterval(minutes: Int) {
@@ -133,7 +152,10 @@ class TimeAnnouncer {
         pendingAnnouncementText = nil
         audioPlayer?.stop()
         audioPlayer = nil
+        systemSpeechActive = false
+        fallbackStatus = nil
         synthesizer.stopSpeaking()
+        setSpeechStatus(nil)
         return audioGeneration
     }
 
@@ -173,13 +195,18 @@ class TimeAnnouncer {
         speakWithSystemVoice(text)
     }
 
-    private func speakWithSystemVoice(_ text: String) {
+    private func speakWithSystemVoice(_ text: String, fallbackFrom provider: String? = nil) {
+        fallbackStatus = provider.map { "\($0) unavailable. Using System Voice. See Voice menu." }
         synthesizer.volume = settingsManager.volume
-        synthesizer.startSpeaking(text)
+        systemSpeechActive = synthesizer.startSpeaking(text)
+        setSpeechStatus(systemSpeechActive
+            ? fallbackStatus ?? "Playing System Voice"
+            : "Speech could not start. Try Preview Voice again.")
     }
 
     private func announceWithElevenLabs(_ text: String) {
         let generation = stopAllAudio()
+        setSpeechStatus("Preparing ElevenLabs voice…")
         pendingAnnouncementText = text
         currentAnnouncementTask = Task { [weak self] in
             guard !Task.isCancelled else { return }
@@ -190,7 +217,7 @@ class TimeAnnouncer {
                     guard let self = self, self.isCurrentAnnouncement(generation) else { return }
                     self.currentAnnouncementTask = nil
                     self.pendingAnnouncementText = nil
-                    self.playAudio(data: audioData)
+                    self.playAudio(data: audioData, fallbackText: text, provider: "ElevenLabs")
                 }
             } catch {
                 guard !Task.isCancelled else { return }
@@ -199,7 +226,7 @@ class TimeAnnouncer {
                     guard let self = self, self.isCurrentAnnouncement(generation) else { return }
                     self.currentAnnouncementTask = nil
                     self.pendingAnnouncementText = nil
-                    self.speakWithSystemVoice(text)
+                    self.speakWithSystemVoice(text, fallbackFrom: "ElevenLabs")
                 }
             }
         }
@@ -207,6 +234,7 @@ class TimeAnnouncer {
 
     private func announceWithKokoro(_ text: String) {
         let generation = stopAllAudio()
+        setSpeechStatus("Preparing Kokoro voice…")
         pendingAnnouncementText = text
         currentAnnouncementTask = Task { [weak self] in
             guard !Task.isCancelled else { return }
@@ -217,7 +245,7 @@ class TimeAnnouncer {
                     guard let self = self, self.isCurrentAnnouncement(generation) else { return }
                     self.currentAnnouncementTask = nil
                     self.pendingAnnouncementText = nil
-                    self.playAudio(data: audioData)
+                    self.playAudio(data: audioData, fallbackText: text, provider: "Kokoro")
                 }
             } catch {
                 guard !Task.isCancelled else { return }
@@ -226,13 +254,13 @@ class TimeAnnouncer {
                     guard let self = self, self.isCurrentAnnouncement(generation) else { return }
                     self.currentAnnouncementTask = nil
                     self.pendingAnnouncementText = nil
-                    self.speakWithSystemVoice(text)
+                    self.speakWithSystemVoice(text, fallbackFrom: "Kokoro")
                 }
             }
         }
     }
 
-    private func playAudio(data: Data) {
+    private func playAudio(data: Data, fallbackText: String, provider: String) {
         // Stop any existing audio before new playback
         audioPlayer?.stop()
         audioPlayer = nil
@@ -240,11 +268,36 @@ class TimeAnnouncer {
 
         do {
             audioPlayer = try AVAudioPlayer(data: data)
+            audioPlayer?.delegate = self
             audioPlayer?.volume = settingsManager.volume
-            audioPlayer?.play()
+            if audioPlayer?.play() == true {
+                setSpeechStatus("Playing \(provider) voice")
+            } else {
+                stopAllAudio()
+                speakWithSystemVoice(fallbackText, fallbackFrom: provider)
+            }
         } catch {
             print("Audio playback error: \(error)")
-            announceWithSystemVoice(formatTimeForSpeech())
+            stopAllAudio()
+            speakWithSystemVoice(fallbackText, fallbackFrom: provider)
+        }
+    }
+
+    nonisolated func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
+        Task { @MainActor [weak self, weak player] in
+            guard let self, let player, self.audioPlayer === player else { return }
+            self.audioPlayer = nil
+            self.setSpeechStatus(flag ? nil : "Audio playback stopped. Try Preview Voice again.")
+        }
+    }
+
+    nonisolated func speechSynthesizer(_ sender: NSSpeechSynthesizer, didFinishSpeaking finishedSpeaking: Bool) {
+        Task { @MainActor [weak self] in
+            guard let self, self.systemSpeechActive, !self.synthesizer.isSpeaking else { return }
+            self.systemSpeechActive = false
+            self.setSpeechStatus(finishedSpeaking
+                ? self.fallbackStatus
+                : "Speech stopped before completion. Try Preview Voice again.")
         }
     }
 

@@ -1,5 +1,19 @@
 # Changelog
 
+## 1.0.2 candidate, 2026-10-02
+
+Not published. See [the release record](docs/release-checklist.md) for acceptance
+and remaining gates.
+
+- Bound local and cloud voice waits; recover from worker failures and cancel stale speech.
+- Show voice preparation/fallback and actual login approval state.
+- Explain invalid input and cloud credit use in context.
+- Reopen the existing menu from Applications or Spotlight.
+- Include the local-preferences privacy manifest.
+- Verify package identity and publication destination; retain a previous package.
+- Run live smoke only from the verified installed app to preserve login routing.
+
+
 ## Unreleased
 
 - **Buy Me a Coffee…** menu item added. It opens

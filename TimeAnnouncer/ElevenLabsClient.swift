@@ -11,6 +11,14 @@ struct ElevenLabsClient {
     static let baseURL = "https://api.elevenlabs.io/v1"
     static let defaultVoiceId = "jqcCZkN6Knx8BJ5TBdYR" // Zara
     static let modelId = "eleven_flash_v2_5"
+    private static let session: URLSession = {
+        let configuration = URLSessionConfiguration.ephemeral
+        // Time announcements lose their value if the network stalls. Bound the
+        // complete request, including a response that arrives very slowly.
+        configuration.timeoutIntervalForRequest = 8
+        configuration.timeoutIntervalForResource = 10
+        return URLSession(configuration: configuration)
+    }()
 
     static func fetchSpeech(text: String, voiceId: String = defaultVoiceId) async throws -> Data {
         guard let apiKey = KeychainHelper.load(forKey: "elevenlabs_api_key"), !apiKey.isEmpty else {
@@ -36,7 +44,7 @@ struct ElevenLabsClient {
         request.httpBody = try JSONSerialization.data(withJSONObject: body)
 
         do {
-            let (data, response) = try await URLSession.shared.data(for: request)
+            let (data, response) = try await session.data(for: request)
 
             guard let httpResponse = response as? HTTPURLResponse else {
                 throw ElevenLabsError.invalidResponse

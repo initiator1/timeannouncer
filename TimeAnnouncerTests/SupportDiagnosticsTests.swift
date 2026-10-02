@@ -47,7 +47,7 @@ final class SupportDiagnosticsTests: XCTestCase {
         XCTAssertTrue(diagnostics.contains("Interval: 15 minutes"))
         XCTAssertTrue(diagnostics.contains("Timing Mode: Clock-Aligned"))
         XCTAssertTrue(diagnostics.contains("Voice Provider: ElevenLabs"))
-        XCTAssertTrue(diagnostics.contains("Voice Readiness: Ready"))
+        XCTAssertTrue(diagnostics.contains("Voice Readiness: Key saved (not verified)"))
         XCTAssertTrue(diagnostics.contains("Volume: 50%"))
         XCTAssertTrue(diagnostics.contains("Launch at Login: Yes"))
         XCTAssertTrue(diagnostics.contains("Kokoro Installed: No"))

@@ -1,4 +1,5 @@
 import CryptoKit
+import Darwin
 import Foundation
 
 enum KokoroError: Error, LocalizedError {
@@ -7,6 +8,7 @@ enum KokoroError: Error, LocalizedError {
     case synthesisFailed(status: Int32, message: String)
     case outputNotFound
     case workerProtocol(String)
+    case workerTimedOut
 
     var errorDescription: String? {
         switch self {
@@ -20,6 +22,8 @@ enum KokoroError: Error, LocalizedError {
             return "Kokoro did not produce an audio file."
         case .workerProtocol(let message):
             return "Kokoro worker protocol error: \(message)"
+        case .workerTimedOut:
+            return "Kokoro did not respond in time. Try Kokoro again or rebuild its environment."
         }
     }
 }
@@ -58,6 +62,11 @@ struct KokoroClient {
 
     static var isInstalled: Bool {
         FileManager.default.isExecutableFile(atPath: pythonURL.path)
+    }
+
+    /// App termination cannot wait for a model load to finish on the worker actor.
+    static func shutdown() {
+        worker.shutdown()
     }
 
     static func prepareForSpeech() {
@@ -157,11 +166,58 @@ private struct KokoroWorkerResponse: Decodable {
     let error: String?
 }
 
-private actor KokoroWorker {
+/// The actor owns the protocol. This small locked owner lets app termination
+/// stop its process even while the actor is waiting for a reply.
+private final class KokoroWorkerProcess: @unchecked Sendable {
+    private let lock = NSLock()
     private var process: Process?
+    private var isShuttingDown = false
+
+    var isRunning: Bool {
+        lock.lock()
+        defer { lock.unlock() }
+        return process?.isRunning == true
+    }
+
+    func start(_ process: Process) throws {
+        lock.lock()
+        defer { lock.unlock() }
+        guard !isShuttingDown else { throw CancellationError() }
+        try process.run()
+        self.process = process
+    }
+
+    func stop(shuttingDown: Bool = false) {
+        lock.lock()
+        defer { lock.unlock() }
+        if shuttingDown { isShuttingDown = true }
+        let stoppedProcess = process
+        process = nil
+
+        guard let stoppedProcess, stoppedProcess.isRunning else { return }
+        // The worker owns only disposable synthesis state. Force termination
+        // after a failed exchange so an unresponsive model cannot remain alive
+        // alongside its replacement or survive app termination.
+        kill(stoppedProcess.processIdentifier, SIGKILL)
+    }
+}
+
+actor KokoroWorker {
+    private let processOwner = KokoroWorkerProcess()
     private var inputHandle: FileHandle?
     private var outputHandle: FileHandle?
     private var outputBuffer = Data()
+    private let startupTimeout: TimeInterval
+    private let responseTimeout: TimeInterval
+
+    init(startupTimeout: TimeInterval = 15, responseTimeout: TimeInterval = 10) {
+        self.startupTimeout = startupTimeout
+        self.responseTimeout = responseTimeout
+    }
+
+    nonisolated func shutdown() {
+        processOwner.stop(shuttingDown: true)
+    }
 
     func prepare(
         pythonURL: URL,
@@ -183,25 +239,33 @@ private actor KokoroWorker {
         scriptURL: URL,
         appSupportDirectory: URL
     ) throws {
-        try ensureStarted(
-            pythonURL: pythonURL,
-            scriptURL: scriptURL,
-            appSupportDirectory: appSupportDirectory
-        )
+        do {
+            try ensureStarted(
+                pythonURL: pythonURL,
+                scriptURL: scriptURL,
+                appSupportDirectory: appSupportDirectory
+            )
+            try Task.checkCancellation()
 
-        let request = KokoroWorkerRequest(text: text, voice: voice, output: outputURL.path)
-        let requestData = try JSONEncoder().encode(request)
+            let request = KokoroWorkerRequest(text: text, voice: voice, output: outputURL.path)
+            var requestData = try JSONEncoder().encode(request)
+            requestData.append(0x0A)
 
-        guard let inputHandle else {
-            throw KokoroError.workerProtocol("missing worker stdin")
-        }
+            guard let inputHandle else {
+                throw KokoroError.workerProtocol("missing worker stdin")
+            }
 
-        inputHandle.write(requestData)
-        inputHandle.write(Data([0x0A]))
+            try inputHandle.write(contentsOf: requestData)
 
-        let response = try readWorkerResponse()
-        guard response.ok == true else {
-            throw KokoroError.synthesisFailed(status: -1, message: response.error ?? "Unknown worker error")
+            let response = try readWorkerResponse(timeout: responseTimeout)
+            guard response.ok == true else {
+                throw KokoroError.synthesisFailed(status: -1, message: response.error ?? "Unknown worker error")
+            }
+        } catch {
+            // A timed-out or cancelled response must never become the next
+            // request's response. Restart the worker after every failed exchange.
+            stopWorker()
+            throw error
         }
     }
 
@@ -210,7 +274,8 @@ private actor KokoroWorker {
         scriptURL: URL,
         appSupportDirectory: URL
     ) throws {
-        if process?.isRunning == true {
+        try Task.checkCancellation()
+        if processOwner.isRunning {
             return
         }
 
@@ -237,15 +302,14 @@ private actor KokoroWorker {
         process.standardOutput = outputPipe
         process.standardError = FileHandle.nullDevice
 
-        try process.run()
+        try processOwner.start(process)
 
-        self.process = process
         self.inputHandle = inputPipe.fileHandleForWriting
         self.outputHandle = outputPipe.fileHandleForReading
         self.outputBuffer = Data()
 
         do {
-            let response = try readWorkerResponse()
+            let response = try readWorkerResponse(timeout: startupTimeout)
             guard response.ready == true else {
                 throw KokoroError.workerProtocol("worker did not send ready")
             }
@@ -255,8 +319,8 @@ private actor KokoroWorker {
         }
     }
 
-    private func readWorkerResponse() throws -> KokoroWorkerResponse {
-        let data = try readWorkerLine()
+    private func readWorkerResponse(timeout: TimeInterval) throws -> KokoroWorkerResponse {
+        let data = try readWorkerLine(timeout: timeout)
         do {
             return try JSONDecoder().decode(KokoroWorkerResponse.self, from: data)
         } catch {
@@ -265,12 +329,14 @@ private actor KokoroWorker {
         }
     }
 
-    private func readWorkerLine() throws -> Data {
+    private func readWorkerLine(timeout: TimeInterval) throws -> Data {
         guard let outputHandle else {
             throw KokoroError.workerProtocol("missing worker stdout")
         }
 
+        let deadline = ProcessInfo.processInfo.systemUptime + timeout
         while true {
+            try Task.checkCancellation()
             if let newlineIndex = outputBuffer.firstIndex(of: 0x0A) {
                 let line = outputBuffer[..<newlineIndex]
                 let removeEnd = outputBuffer.index(after: newlineIndex)
@@ -278,24 +344,47 @@ private actor KokoroWorker {
                 return Data(line)
             }
 
-            let chunk = outputHandle.availableData
-            if chunk.isEmpty {
-                stopWorker()
-                throw KokoroError.workerProtocol("worker exited before responding")
+            let remaining = deadline - ProcessInfo.processInfo.systemUptime
+            guard remaining > 0 else {
+                throw KokoroError.workerTimedOut
+            }
+            guard outputBuffer.count < 65_536 else {
+                throw KokoroError.workerProtocol("response exceeds 64 KB")
             }
 
-            outputBuffer.append(chunk)
+            // availableData can block forever. Poll in short slices so a stuck
+            // model cannot prevent fallback or cancellation of pending speech.
+            var descriptor = pollfd(fd: outputHandle.fileDescriptor, events: Int16(POLLIN), revents: 0)
+            let waitMilliseconds = Int32(min(remaining * 1_000, 100).rounded(.up))
+            let pollResult = poll(&descriptor, 1, waitMilliseconds)
+            if pollResult == 0 { continue }
+            if pollResult < 0 {
+                if errno == EINTR { continue }
+                throw KokoroError.workerProtocol("could not wait for worker output")
+            }
+
+            var bytes = [UInt8](repeating: 0, count: 4_096)
+            let count = bytes.withUnsafeMutableBytes { buffer in
+                Darwin.read(outputHandle.fileDescriptor, buffer.baseAddress, buffer.count)
+            }
+            if count < 0 {
+                if errno == EINTR { continue }
+                throw KokoroError.workerProtocol("could not read worker output")
+            }
+            if count == 0 {
+                throw KokoroError.workerProtocol("worker exited before responding")
+            }
+            outputBuffer.append(contentsOf: bytes.prefix(count))
         }
     }
 
-    private func stopWorker() {
+    func stopWorker() {
+        try? inputHandle?.close()
+        try? outputHandle?.close()
         inputHandle = nil
         outputHandle = nil
 
-        if process?.isRunning == true {
-            process?.terminate()
-        }
-        process = nil
+        processOwner.stop()
 
         outputBuffer = Data()
     }

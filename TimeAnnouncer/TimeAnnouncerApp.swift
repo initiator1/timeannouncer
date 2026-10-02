@@ -12,7 +12,8 @@ struct TimeAnnouncerApp: App {
     }
 }
 
-class AppDelegate: NSObject, NSApplicationDelegate {
+@MainActor
+class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate {
     var statusItem: NSStatusItem?
     var popover: NSPopover?
     var timeAnnouncer: TimeAnnouncer?
@@ -28,6 +29,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Initialize the time announcer
         timeAnnouncer = TimeAnnouncer(settingsManager: settingsManager)
+        timeAnnouncer?.onSpeechStatusChange = { [weak self] in self?.setupMenu() }
 
         // Create the status bar item
         statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
@@ -55,8 +57,21 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        // Applications and Spotlight remain a way back to the controls when
+        // the clock icon is hidden among other menu-bar items.
+        sender.activate(ignoringOtherApps: true)
+        if !flag {
+            DispatchQueue.main.async { [weak self] in
+                self?.statusItem?.button?.performClick(nil)
+            }
+        }
+        return false
+    }
+
     func setupMenu() {
         let menu = NSMenu()
+        menu.delegate = self
 
         // Status header
         let statusItem = NSMenuItem(title: settingsManager.isEnabled ? "✓ Announcing" : "Paused", action: nil, keyEquivalent: "")
@@ -121,7 +136,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         // Timing Mode submenu
         let timingMenu = NSMenu()
 
-        let clockAlignedItem = NSMenuItem(title: "Clock-Aligned (:00, :15, :30, :45)", action: #selector(selectClockAligned), keyEquivalent: "")
+        let clockAlignedItem = NSMenuItem(title: "Clock-Aligned", action: #selector(selectClockAligned), keyEquivalent: "")
         clockAlignedItem.target = self
         clockAlignedItem.state = settingsManager.timingMode == .clockAligned ? .on : .off
         timingMenu.addItem(clockAlignedItem)
@@ -188,12 +203,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
         // Launch at login
         let launchItem = NSMenuItem(
-            title: "Launch at Login",
+            title: loginItemTitle,
             action: #selector(toggleLaunchAtLogin),
             keyEquivalent: ""
         )
         launchItem.target = self
-        launchItem.state = settingsManager.launchAtLogin ? .on : .off
+        launchItem.state = loginItemState
         menu.addItem(launchItem)
 
         let diagnosticsItem = NSMenuItem(title: "Copy Support Diagnostics", action: #selector(copySupportDiagnostics), keyEquivalent: "")
@@ -258,8 +273,10 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         alert.addButton(withTitle: "Cancel")
 
         let inputField = NSTextField(frame: NSRect(x: 0, y: 0, width: 200, height: 24))
+        inputField.setAccessibilityLabel("Interval in minutes")
         inputField.stringValue = "\(settingsManager.intervalMinutes)"
         alert.accessoryView = inputField
+        alert.window.initialFirstResponder = inputField
 
         let response = alert.runModal()
         if response == .alertFirstButtonReturn {
@@ -276,6 +293,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 settingsManager.intervalMinutes = minutes
                 timeAnnouncer?.updateInterval(minutes: minutes)
                 setupMenu()
+            } else {
+                showAlert(title: "Invalid Interval", message: "Enter a whole number of minutes greater than zero.")
             }
         }
     }
@@ -309,11 +328,13 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc func selectSystemVoice() {
+        timeAnnouncer?.cancelCurrentSpeech()
         settingsManager.voiceProvider = .system
         setupMenu()
     }
 
     @objc func selectKokoroVoice() {
+        timeAnnouncer?.cancelCurrentSpeech()
         settingsManager.voiceProvider = .kokoro
         if !KokoroClient.isInstalled {
             showKokoroSetupDialog()
@@ -328,6 +349,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             showApiKeyDialog()
         }
         if settingsManager.hasElevenLabsApiKey {
+            timeAnnouncer?.cancelCurrentSpeech()
             settingsManager.voiceProvider = .elevenlabs
             setupMenu()
         }
@@ -387,14 +409,16 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     @objc func showApiKeyDialog() {
         let alert = NSAlert()
         alert.messageText = "ElevenLabs API Key"
-        alert.informativeText = "Enter your ElevenLabs API key to use premium voices:"
+        alert.informativeText = "Time phrases and your API key are sent to ElevenLabs to generate speech and may use paid credits. The key is stored in macOS Keychain. Choose System Voice to stop cloud requests."
         alert.alertStyle = .informational
         alert.addButton(withTitle: "Save")
         alert.addButton(withTitle: "Cancel")
 
         let inputField = NSSecureTextField(frame: NSRect(x: 0, y: 0, width: 300, height: 24))
         inputField.placeholderString = "xi-xxxxxxxxxxxxxxxxxxxxxxxx"
+        inputField.setAccessibilityLabel("ElevenLabs API key")
         alert.accessoryView = inputField
+        alert.window.initialFirstResponder = inputField
 
         let response = alert.runModal()
         if response == .alertFirstButtonReturn {
@@ -406,6 +430,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 } catch {
                     showAlert(title: "Could Not Save API Key", message: error.localizedDescription)
                 }
+            } else {
+                showAlert(title: "API Key Required", message: "Enter a key, or choose Cancel to keep using your current voice.")
             }
         }
     }
@@ -420,13 +446,14 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     private var voiceStatusTitle: String {
+        if let status = timeAnnouncer?.speechStatus { return status }
         switch settingsManager.voiceProvider {
         case .system:
             return "Voice: System Voice"
         case .kokoro:
-            return KokoroClient.isInstalled ? "Voice: Kokoro Ready" : "Voice: Kokoro Needs Install"
+            return KokoroClient.isInstalled ? "Voice: Kokoro Selected" : "Voice: Kokoro Needs Install"
         case .elevenlabs:
-            return settingsManager.hasElevenLabsApiKey ? "Voice: ElevenLabs Ready" : "Voice: ElevenLabs Needs API Key"
+            return settingsManager.hasElevenLabsApiKey ? "Voice: ElevenLabs Selected" : "Voice: ElevenLabs Needs API Key"
         }
     }
 
@@ -446,27 +473,51 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     @objc func toggleLaunchAtLogin() {
-        settingsManager.launchAtLogin.toggle()
-
-        if #available(macOS 13.0, *) {
-            do {
-                if settingsManager.launchAtLogin {
-                    try SMAppService.mainApp.register()
-                } else {
-                    try SMAppService.mainApp.unregister()
-                }
-            } catch {
-                print("Failed to update login item: \(error)")
-                // Revert the setting if it failed
-                settingsManager.launchAtLogin.toggle()
+        if SMAppService.mainApp.status == .requiresApproval {
+            SMAppService.openSystemSettingsLoginItems()
+            return
+        }
+        do {
+            if SMAppService.mainApp.status == .enabled {
+                try SMAppService.mainApp.unregister()
+            } else {
+                try SMAppService.mainApp.register()
             }
+            settingsManager.launchAtLogin = SMAppService.mainApp.status == .enabled
+            if SMAppService.mainApp.status == .requiresApproval {
+                showAlert(title: "Login Approval Needed", message: "Allow Time Announcer in System Settings > General > Login Items. Choose Launch at Login again to open those settings.")
+            }
+        } catch {
+            showAlert(title: "Could Not Change Launch at Login", message: "macOS reports: \(error.localizedDescription) Open System Settings > General > Login Items to check access.")
         }
 
         setupMenu()
     }
 
+    private var loginItemTitle: String {
+        SMAppService.mainApp.status == .requiresApproval ? "Launch at Login: Approval Needed…" : "Launch at Login"
+    }
+
+    private var loginItemState: NSControl.StateValue {
+        switch SMAppService.mainApp.status {
+        case .enabled: return .on
+        case .requiresApproval: return .mixed
+        default: return .off
+        }
+    }
+
+    func menuWillOpen(_ menu: NSMenu) {
+        if let item = menu.items.first(where: { $0.action == #selector(toggleLaunchAtLogin) }) {
+            item.title = loginItemTitle
+            item.state = loginItemState
+        }
+    }
+
     @objc func copySupportDiagnostics() {
-        let diagnostics = SupportDiagnostics.make(settingsManager: settingsManager)
+        let loginStatus = SMAppService.mainApp.status == .requiresApproval
+            ? "Approval needed"
+            : (SMAppService.mainApp.status == .enabled ? "Yes" : "No")
+        let diagnostics = SupportDiagnostics.make(settingsManager: settingsManager, loginStatus: loginStatus)
         let pasteboard = NSPasteboard.general
         pasteboard.clearContents()
         pasteboard.setString(diagnostics, forType: .string)
@@ -476,6 +527,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc func quitApp() {
         NSApplication.shared.terminate(nil)
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        timeAnnouncer?.stop()
+        KokoroClient.shutdown()
     }
 
     private static func makeSettingsManager() -> SettingsManager {
