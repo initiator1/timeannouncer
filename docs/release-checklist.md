@@ -3,18 +3,25 @@
 ## Candidate and decision, 2026-10-02
 
 Candidate: **1.0.2, build 3**. Branch: `codex/dependable-release-1.0.2`.
-Status: **Hold public release. Local engineering preparation is complete;
-interactive acceptance and external approvals remain open.**
+Status: **Hold public release. Notarization and installed-app checks pass;
+speaker confirmation, GitHub sign-in, and publication approval remain open.**
 
-The signed candidate is installed and running from `/Applications/TimeAnnouncer.app`.
+The signed, notarized candidate runs from `/Applications/TimeAnnouncer.app`.
 Original preferences are unchanged. The source receipt identifies the package with
 SHA-256 `b5e97502b0b3b416bdf5d1777cac7481add55bbddc673ce4529ba1a33892ec72`.
 The final local commit is recorded in the audit folder's `candidate-git.txt`.
 
 The latest public GitHub release remains 1.0.1, checked on 2026-10-02.
 Version 1.0.0 shipped on 2026-05-26. This record must never describe that
-historical release as an unshipped product. The 1.0.2 work has not been uploaded
-or published. Its signed local package is not notarized.
+historical release as an unshipped product. Version 1.0.2 has no GitHub upload
+or publication. After BOSS approved Apple submission, Apple accepted both the
+app and DMG. Their stapled tickets validate, and Gatekeeper accepts the app.
+
+Apple submission receipts:
+
+- App: `29cb85d9-ce12-4938-b716-9e1dcf832b92`, Accepted.
+- DMG: `91b0baed-7421-40a9-b588-7d5e7caf2a0a`, Accepted.
+- Final DMG SHA-256: `cc2e119d11aee12d2169688a81a158fa7dd52f915238e0cc66b079b3a734459d`.
 
 ## Audience, promise, and fixed scope
 
@@ -49,13 +56,13 @@ a backend, analytics, new domains, notification infrastructure, and visual redes
 
 | Job | Completion condition | Current evidence |
 |---|---|---|
-| Install and start | DMG installs the stated version; first use is quiet and understandable | Signed universal DMG mounts; installed executable matches candidate; isolated fresh-default smoke passes |
-| Hear a preview | Preview uses the chosen voice at the chosen app volume | First-use Preview action exercised; actual audible output is not independently verified |
-| Run a schedule | Choose interval/mode, resume, hear a correctly timed announcement, then pause | Boundary policy tests pass; actual scheduled speaker output remains unverified |
-| Control settings | Invalid input explains recovery; preferences survive restart | Code and persistence fixtures inspected; full menu interaction awaits supported automation |
-| Recover from voice failure | Stalled, cancelled, or malformed voice output cannot hang future speech | Five real subprocess fixtures pass; physical fallback audio remains unverified |
+| Install and start | DMG installs the stated version; first use is quiet and understandable | Notarized universal DMG installs; installed executable matches; strict smoke and fresh paused defaults pass |
+| Hear a preview | Preview uses the chosen voice at the chosen app volume | Actual System Voice and Kokoro previews reach playback state; speaker output needs BOSS's confirmation |
+| Run a schedule | Choose interval/mode, resume, hear a correctly timed announcement, then pause | Fixed interval reaches playback 60.185 seconds after resume; clock-aligned playback starts 0.437 seconds after the boundary; pause passes; speaker confirmation remains open |
+| Control settings | Invalid input explains recovery; preferences survive restart | Actual menu rejects invalid input, accepts valid settings, and preserves all test preferences after menu Quit and restart |
+| Recover from voice failure | Stalled, cancelled, or malformed voice output cannot hang future speech | Five subprocess fixtures pass; invalid cached WAV triggers System Voice fallback; restored valid cache allows Kokoro retry; fallback speaker output remains unverified |
 | Return after login | Registration points to Applications; macOS approval state is truthful | macOS records enabled and allowed at `/Applications/TimeAnnouncer.app`; real logout/login remains untested |
-| Update and get help | Correct installed version, useful diagnostics, working links, no key disclosure | Diagnostic fixtures pass; current public release and GitHub issues render; Ko-fi tip form renders |
+| Update and get help | Correct installed version, useful diagnostics, working links, no key disclosure | Actual copied diagnostics show 1.0.2 (3), correct settings and login state, with no key; update dialog shows 1.0.2; releases, issues, and Ko-fi render |
 | Roll back | A previous app can replace this app without deleting user data | Prior 1.0.1 ZIP extracted, checksum and signature verified, notarization ticket valid, Gatekeeper accepted; live replacement not rehearsed |
 
 No build, screenshot, unit test, or registration flag alone completes the
@@ -84,24 +91,33 @@ Evidence is stored locally in `build/release-audit-2026-10-02/`:
 - `xcode-tests.log`: 13 existing and new tests pass before the last worker-shutdown fixture.
 - `focused-tests.log`: seven focused tests pass after shutdown and diagnostic updates.
   Together these cover 14 distinct tests. No tests were deleted.
-- `build-release-final.log`: final local Release build, signing, DMG generation, and checksum result.
-- `smoke-final-installed.log`: final package identity, resources, architecture, signature,
-  and fresh defaults using the repaired installed-only runtime probe.
-- `install-final.log`: actual installation from the final candidate DMG.
+- `notarized-build.log` and `notarization-receipt.json`: final Release build,
+  signing, Apple acceptance, stapling, and DMG checksum.
+- `smoke-notarized-installed.log`: strict notarized package identity, resources,
+  architectures, signatures, tickets, Gatekeeper, and installed-only runtime checks.
+- `install-notarized.log`: actual installation from the notarized candidate DMG.
+- `ui-acceptance.jsonl`: actual menu, dialog, preview, scheduling, failure,
+  diagnostics, modal reopening, and restart outcomes using isolated preferences.
+  Early probe errors come from the test harness. The final checks pass.
+- `installed-support-diagnostics.txt`: actual copied diagnostics with no key contents.
 - `01-first-use.png`: first-use dialog inspection during this preparation.
 - `02-reopened-menu.png`: installed candidate menu before the final API-key copy correction.
   The menu layout is unchanged.
+- `03-api-key-dialog.png`: final installed app's API-key dialog; its app-only
+  capture shows readable disclosure, named field, and initial focus without clipping.
 - `original-preferences.plist`: recovery snapshot; original preference values remain unchanged.
 - `restored-preferences.plist`, `restored-login-registration.txt`, and
-  `final-runtime-readback.log`: final readback, installed identity, and helper comparison.
+  `notarized-runtime-readback.log`: final readback and notarized installed identity.
+  Original preference values match. The normal app and its local worker run again.
 - `offline-kokoro-probe.json`: the installed helper generates a 1.725-second,
   non-silent 24 kHz mono WAV in 6.20 seconds with offline flags and the existing model.
   The helper is byte-identical in the final installed build. This does not prove
   speaker output or warm-worker latency.
 - `restoration-rehearsal.log`: backup extraction and macOS security verification.
-- `launch-audit-final.log`: technical audit fails two gates: the active `initiator1`
-  GitHub credential is invalid, and the candidate lacks notarization. Working tree,
-  tools, package checks before notarization, and public-material checks pass.
+- `launch-audit-final.log`: earlier audit, before approved notarization, fails
+  authentication and notarization. Use the current audit recorded below for status.
+- `launch-audit-notarized.log`: current technical audit. Package notarization
+  passes; GitHub sign-in remains pending.
 
 The [candidate menu capture](media/timeannouncer-v1.0.2-candidate-menu.png) is
 available for review and later release material. It shows isolated test settings.
@@ -120,15 +136,17 @@ submenus, login, diagnostics, updates, support, and quit. The captured menu fits
 the tested display without scrolling.
 
 The custom interval and API-key fields now have accessibility labels and initial
-keyboard focus. Native semantics are present, but complete keyboard navigation,
+keyboard focus. Actual checks verify those labels, focus, Return submission,
+Escape cancellation, and useful recovery for invalid intervals or empty keys.
+Reopening the app with an interval dialog keeps one usable dialog.
+Native semantics are present, but complete keyboard navigation,
 VoiceOver, compact laptop placement, and high-contrast settings are unverified.
 No accessibility compliance claim is made. There is no web layout to test.
 
-Desktop inspection can read the welcome alert but returns `noWindowsAvailable`
-or times out for the menu-only app. An app-scoped screenshot verifies the menu
-visually. A separate accessibility automation method awaits explicit permission.
-A full Finder screenshot was rejected by automatic approval review because it
-could expose unrelated private content. All saved images are app-only captures.
+The desktop tool cannot reliably target the menu-only app. After BOSS approved
+app-specific macOS accessibility scripts, that method verifies actual menu actions
+and dialogs. App-only screenshots verify layout. All saved images exclude unrelated
+Finder content.
 
 ## Operational review
 
@@ -147,18 +165,23 @@ downloads dependencies and models; the dependency range remains unpinned.
 The installed helper produces audio with model downloads disabled by its offline
 flags. Fresh optional-voice setup and network-level isolation remain untested.
 Cache growth is limited by the small vocabulary of time phrases and voice choice,
-but no new cache-eviction mechanism is added.
+but no new cache-eviction mechanism is added. Invalid cached audio triggers System
+Voice fallback. The app does not discard that corrupt cache entry automatically.
+The acceptance probe restores the original cache file before the healthy retry;
+it does not prove automatic cache repair. All user cache data is restored.
 
 ElevenLabs uses HTTPS and the user's own key. Requests have bounded timeouts and
 an ephemeral session. One in-flight app task is retained; newer requests cancel
 older work. Cancellation cannot refund a request already received by the service.
 No paid live request or billing change was made. Actual authentication, quota,
-and provider/voice availability remain untested. The UI discloses possible credit use.
+and provider/voice availability remain untested. The actual dialog discloses key
+and phrase transmission, Keychain storage, and possible paid credit use.
 
-Timers run only while the app and Mac are awake. Policy tests cover clock-boundary
-behavior. Actual sleep/wake, clock changes, output-device changes, and scheduled
-speaker delivery remain untested. Console errors and copied diagnostics support
-local troubleshooting. There is no remote monitoring or telemetry.
+Timers run only while the app and Mac are awake. Actual fixed and clock-aligned
+schedule checks reach playback at the expected times. Sleep/wake, clock changes,
+output-device changes, and physical speaker delivery remain unverified.
+Console errors and copied diagnostics support local troubleshooting.
+There is no remote monitoring or telemetry.
 
 INITIATOR LLC owns distribution and support. The human owner approves publication,
 Apple submission, spending, and account changes. The engineering agent owns builds,
@@ -198,16 +221,14 @@ or subscription action was taken.
 
 ## Release blockers
 
-1. Finish actual menu, audio, scheduled delivery, persistence, and failure recovery
-   acceptance on this candidate. Supported menu automation is unresolved.
-2. Obtain authorization to send this concrete candidate to Apple for notarization.
-   Automatic approval review rejected that external upload. Gatekeeper currently
-   reports `Unnotarized Developer ID`; no security protection was bypassed.
-3. Repair GitHub authentication for the intended `initiator1` account with the
-   owner's participation before an approved upload. `gh auth status` reports its
-   saved credential invalid. No account switch or credential change was made.
-4. After notarization and acceptance, obtain separate publication approval. No
-   GitHub draft, public release, tag push, or outreach has occurred.
+1. Obtain BOSS's confirmation of clear preview and scheduled speech from the Mac.
+   Actual menu, playback timing, persistence, and fallback checks pass. A pending
+   question asks for speaker confirmation; elapsed time does not provide evidence.
+2. Complete the approved GitHub sign-in for `initiator1`, then verify the account
+   and repository access. The earlier saved credential is invalid. BOSS approves
+   opening the sign-in flow; it currently waits for his interactive completion.
+3. After acceptance, obtain separate publication approval. No GitHub draft, public
+   release, tag push, or outreach has occurred. Apple notarization is complete.
 
 ## Important follow-ups
 
@@ -217,8 +238,9 @@ or subscription action was taken.
   set. Keep System Voice usable when setup fails.
 - Verify paid ElevenLabs behavior only with account/purpose/spend authorization.
 - Exercise real sleep/wake and login after normal use permits it.
-- Check reopening while a modal alert is present. The ordinary reopen path is
-  visually verified; an alert may need a separate guard if it overlaps the menu.
+- Discard a corrupt Kokoro cache entry after playback decode failure so a later
+  request can synthesize it again. Current fallback protects speech, but does not
+  repair the cached entry. Owner: engineering agent; complete with a recovery check.
 - Confirm support email receipt when authorized; the GitHub issue path is live.
 
 ## Optional polish

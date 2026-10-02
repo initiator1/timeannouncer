@@ -6,40 +6,41 @@ is closed, and say where it went.
 ## Candidate 1.0.2 release hold - 2026-10-02
 
 Owner: engineering agent for acceptance and packaging; BOSS for external approvals.
-The earlier PrivacyInfo landing obligation is incorporated in signed candidate
-1.0.2, build 3. It is installed locally. Public 1.0.1 remains unchanged.
+The earlier PrivacyInfo landing obligation is incorporated in signed, notarized
+candidate 1.0.2, build 3. It is installed locally. Public 1.0.1 remains unchanged.
 The [release record](docs/release-checklist.md) owns the full evidence and recovery path.
 
 Remaining obligations:
 
-- Finish menu, audible scheduled speech, persistence, and voice-failure acceptance.
-  The desktop tool cannot target the menu-only app. Permission for a narrowly
-  scoped macOS accessibility script is pending. Complete when observed outcomes
-  are recorded, including a user's confirmation of audible delivery.
-- Obtain BOSS's permission for Apple notarization. Automatic approval review
-  rejected the upload because external Apple submission was not authorized.
-  Complete when the concrete candidate has a valid ticket and passes Gatekeeper.
+- Obtain BOSS's confirmation of audible preview and scheduled speech.
+  Approved app-specific accessibility scripts verify menu controls, playback,
+  scheduling, persistence, fallback, and modal reopening. Complete when speaker
+  confirmation is recorded. The question remains pending.
 - Obtain separate publication approval only after acceptance and notarization.
   Complete when the approved public download is verified. No upload or push occurred.
 - Repair the intended `initiator1` GitHub login before any approved upload.
-  The final 2026-10-02 audit reports its saved credential invalid. Owner: BOSS for
+  The earlier 2026-10-02 audit reports its saved credential invalid. Owner: BOSS for
   interactive authentication, engineering agent for rechecking repository access.
-  No account or credential changes were made.
+  BOSS approves opening sign-in; that flow waits for his interactive completion.
+
+Closed on 2026-10-02: Apple accepts the app and DMG after BOSS's approval.
+Stapled tickets, Gatekeeper, strict smoke, and actual DMG installation pass.
+Receipts and outcomes are in the release record. No GitHub upload occurs.
 
 The smoke probe's temporary path redirected login registration during this audit.
 The installed-only probe is repaired. macOS now records the enabled app at
 `/Applications/TimeAnnouncer.app`, and original preferences are unchanged.
 Keep real login and sleep/wake, Intel/macOS 13 runtime, fresh Kokoro setup,
-authorized ElevenLabs checks, modal-alert reopening, and support email delivery as
+authorized ElevenLabs checks, and support email delivery as
 follow-ups in the release record. No additional tasks are created.
 
-App-only screenshots are saved. A full Finder screenshot was rejected by automatic
-approval review because unrelated private content could appear. That broader
-capture was abandoned; no unrelated content is needed for acceptance.
+App-only screenshots are saved. Invalid cached Kokoro audio falls back to System
+Voice but remains cached. Follow-up owner: engineering agent. Discard that entry
+after decode failure and verify automatic synthesis on the next request.
 
 Live link recheck on 2026-10-02: the public release resolves to 1.0.1, GitHub issues
 renders, and the tagged Ko-fi page renders its tip form. This supersedes the old
-Ko-fi rendering gap below. No payment, message, or account change was made.
+Ko-fi rendering gap below. No payment or message was made.
 
 ## Outbound link audit — 2026-08-20
 
