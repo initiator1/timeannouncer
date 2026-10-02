@@ -58,6 +58,7 @@ a backend, analytics, new domains, notification infrastructure, and visual redes
 |---|---|---|
 | Install and start | DMG installs the stated version; first use is quiet and understandable | Notarized universal DMG installs; installed executable matches; strict smoke and fresh paused defaults pass |
 | Hear a preview | Preview uses the chosen voice at the chosen app volume | Actual System Voice and Kokoro previews reach playback state; speaker output needs BOSS's confirmation |
+| Hear the time now | Manual action speaks while the schedule is paused | Installed notarized app moves from preparation to Kokoro playback; original paused settings remain unchanged; speaker confirmation remains open |
 | Run a schedule | Choose interval/mode, resume, hear a correctly timed announcement, then pause | Fixed interval reaches playback 60.185 seconds after resume; clock-aligned playback starts 0.437 seconds after the boundary; pause passes; speaker confirmation remains open |
 | Control settings | Invalid input explains recovery; preferences survive restart | Actual menu rejects invalid input, accepts valid settings, and preserves all test preferences after menu Quit and restart |
 | Recover from voice failure | Stalled, cancelled, or malformed voice output cannot hang future speech | Five subprocess fixtures pass; invalid cached WAV triggers System Voice fallback; restored valid cache allows Kokoro retry; fallback speaker output remains unverified |
@@ -116,8 +117,9 @@ Evidence is stored locally in `build/release-audit-2026-10-02/`:
 - `restoration-rehearsal.log`: backup extraction and macOS security verification.
 - `launch-audit-final.log`: earlier audit, before approved notarization, fails
   authentication and notarization. Use the current audit recorded below for status.
-- `launch-audit-notarized.log`: current technical audit. Package notarization
-  passes; GitHub sign-in remains pending.
+- `launch-audit-notarized.log`: current technical audit has one failure, GitHub
+  authentication. Clean tree, tooling, source identity, packages, notarization,
+  and public-material checks pass. Sign-in awaits BOSS's interactive completion.
 
 The [candidate menu capture](media/timeannouncer-v1.0.2-candidate-menu.png) is
 available for review and later release material. It shows isolated test settings.
