@@ -21,6 +21,10 @@ Remaining obligations:
   Complete when the concrete candidate has a valid ticket and passes Gatekeeper.
 - Obtain separate publication approval only after acceptance and notarization.
   Complete when the approved public download is verified. No upload or push occurred.
+- Repair the intended `initiator1` GitHub login before any approved upload.
+  The final 2026-10-02 audit reports its saved credential invalid. Owner: BOSS for
+  interactive authentication, engineering agent for rechecking repository access.
+  No account or credential changes were made.
 
 The smoke probe's temporary path redirected login registration during this audit.
 The installed-only probe is repaired. macOS now records the enabled app at

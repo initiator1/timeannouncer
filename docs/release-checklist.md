@@ -99,6 +99,9 @@ Evidence is stored locally in `build/release-audit-2026-10-02/`:
   The helper is byte-identical in the final installed build. This does not prove
   speaker output or warm-worker latency.
 - `restoration-rehearsal.log`: backup extraction and macOS security verification.
+- `launch-audit-final.log`: technical audit fails two gates: the active `initiator1`
+  GitHub credential is invalid, and the candidate lacks notarization. Working tree,
+  tools, package checks before notarization, and public-material checks pass.
 
 The [candidate menu capture](media/timeannouncer-v1.0.2-candidate-menu.png) is
 available for review and later release material. It shows isolated test settings.
@@ -200,7 +203,10 @@ or subscription action was taken.
 2. Obtain authorization to send this concrete candidate to Apple for notarization.
    Automatic approval review rejected that external upload. Gatekeeper currently
    reports `Unnotarized Developer ID`; no security protection was bypassed.
-3. After notarization and acceptance, obtain separate publication approval. No
+3. Repair GitHub authentication for the intended `initiator1` account with the
+   owner's participation before an approved upload. `gh auth status` reports its
+   saved credential invalid. No account switch or credential change was made.
+4. After notarization and acceptance, obtain separate publication approval. No
    GitHub draft, public release, tag push, or outreach has occurred.
 
 ## Important follow-ups
